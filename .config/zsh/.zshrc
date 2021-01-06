@@ -1,4 +1,12 @@
-# ZSH plugins
+# Zsh setup
+export HISTFILE="${XDG_DATA_HOME:=$HOME/.local/share}/zsh/history"
+
+autoload -Uz compinit
+ZSH_CACHE_PATH="${XDG_CACHE_HOME:=$HOME/.cache}/zsh"
+mkdir -p "$ZSH_CACHE_PATH"
+compinit -d "$ZSH_CACHE_PATH/zcompdump-$ZSH_VERSION"
+
+# Zsh plugins
 test -e "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 test -e "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
