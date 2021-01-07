@@ -12,6 +12,8 @@ bindkey "\e[B" history-search-forward
 # - Zsh Docs: http://zsh.sourceforge.net/Doc/Release/Completion-System.html#Completion-System
 # - Zsh Guide: http://zsh.sourceforge.net/Guide/zshguide06.html#l144
 mkdir -p "$XDG_CACHE_HOME/zsh"
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
 autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 
