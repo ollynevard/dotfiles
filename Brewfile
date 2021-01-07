@@ -38,7 +38,7 @@ cask "virtualbox"
 cask "visual-studio-code"
 cask "whatsapp"
 cask "yt-music"
-cask "zoomus"
+cask "zoom"
 
 # Fonts
 cask "font-jetbrains-mono-nerd-font"
