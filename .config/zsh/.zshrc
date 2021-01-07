@@ -29,5 +29,7 @@ test -e "/usr/local/opt/nvm/etc/bash_completion.d/nvm" && source "/usr/local/opt
 
 # Aliases
 alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
+alias l="ls -alh"
+alias ls="ls -G"
 alias k="kubectl"
 
