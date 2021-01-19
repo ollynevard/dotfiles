@@ -1,4 +1,9 @@
 [user]
 	name = Olly Nevard
 	email = 150187+ollynevard@users.noreply.github.com
+	signingkey = 0640B87AEA3A15CC
 
+[commit]
+	gpgsign = true
+[gpg]
+	program = /usr/local/bin/gpg
