@@ -8,6 +8,8 @@ export HISTFILE="$XDG_DATA_HOME/zsh/history"
 bindkey "\e[A" history-search-backward
 bindkey "\e[B" history-search-forward
 
+export WORDCHARS='*?_.[]~=&;!#$%^(){}<>'
+
 # Completion
 # - Zsh Docs: http://zsh.sourceforge.net/Doc/Release/Completion-System.html#Completion-System
 # - Zsh Guide: http://zsh.sourceforge.net/Guide/zshguide06.html#l144
