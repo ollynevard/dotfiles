@@ -39,3 +39,6 @@ alias k="kubectl"
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
 
+# Terraform
+export TF_REGISTRY_CLIENT_TIMEOUT=20
+
