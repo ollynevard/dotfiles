@@ -5,5 +5,13 @@
 
 [commit]
 	gpgsign = true
+
 [gpg]
-	program = /usr/local/bin/gpg
+  program = /usr/local/bin/gpg
+
+[alias]
+  dmerged = "!git branch --merged | grep -v '\\*\\|master' | xargs -n 1 git branch -d"
+[pull]
+	rebase = false
+[push]
+	default = current
