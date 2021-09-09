@@ -1,17 +1,20 @@
 [user]
-	name = Olly Nevard
-	email = 150187+ollynevard@users.noreply.github.com
-	signingkey = 0640B87AEA3A15CC
+  name = Olly Nevard
+  email = 150187+ollynevard@users.noreply.github.com
+  signingkey = 0640B87AEA3A15CC
 
 [commit]
-	gpgsign = true
+#	gpgsign = true
 
 [gpg]
   program = /usr/local/bin/gpg
 
 [alias]
   dmerged = "!git branch --merged | grep -v '\\*\\|master' | xargs -n 1 git branch -d"
+
 [pull]
-	rebase = false
+  rebase = false
+
 [push]
-	default = current
+  default = current
+

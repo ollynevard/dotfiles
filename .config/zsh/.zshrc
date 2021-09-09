@@ -30,11 +30,15 @@ export NVM_DIR="$XDG_CONFIG_HOME/nvm"
 test -e "/usr/local/opt/nvm/nvm.sh" && source "/usr/local/opt/nvm/nvm.sh"
 test -e "/usr/local/opt/nvm/etc/bash_completion.d/nvm" && source "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
 
+# Vim
+export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
+
 # Aliases
 alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
 alias l="ls -alh"
 alias ls="ls -G"
 alias k="kubectl"
+alias v="vim"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
@@ -43,7 +47,7 @@ test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
 export TF_REGISTRY_CLIENT_TIMEOUT=20
 
 # Brew
-export PATH="/usr/local/sbin:$PATH"
+export PATH="/usr/local/sbin:$PATH:$HOME/.local/bin"
 
 
 fzf-git-branch() {
@@ -80,3 +84,5 @@ fzf-git-checkout() {
 alias gb='fzf-git-branch'
 alias gco='fzf-git-checkout'
 
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
