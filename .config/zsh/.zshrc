@@ -39,6 +39,9 @@ alias l="ls -alh"
 alias ls="ls -G"
 alias k="kubectl"
 alias v="vim"
+alias t="terraform"
+alias ze="vim ~/.config/zsh/.zshrc"
+alias zr="source ~/.config/zsh/.zshrc"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
