@@ -8,8 +8,8 @@ test -e "/opt/homebrew/opt/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-comp
 
 # History
 export HISTFILE="$XDG_DATA_HOME/zsh/history"
-bindkey "\e[A" history-search-backward
-bindkey "\e[B" history-search-forward
+bindkey "\e[A" history-beginning-search-backward
+bindkey "\e[B" history-beginning-search-forward
 bindkey "^[[1;3C" forward-word
 bindkey "^[[1;3D" backward-word
 
