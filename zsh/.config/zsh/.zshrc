@@ -37,7 +37,6 @@ test -e "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" && source "/opt/homebr
 #export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 
 # Aliases
-alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
 alias g="git"
 alias l="exa --all --long --icons"
 alias ls="exa"
