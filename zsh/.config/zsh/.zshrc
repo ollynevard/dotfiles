@@ -7,7 +7,14 @@ test -e "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" 
 test -e "/opt/homebrew/opt/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions:$FPATH"
 
 # History
+mkdir -p "$XDG_DATA_HOME/zsh"
 export HISTFILE="$XDG_DATA_HOME/zsh/history"
+export HISTSIZE=1000000000
+export SAVEHIST=$HISTSIZE
+setopt EXTENDED_HISTORY
+setopt HIST_FIND_NO_DUPS
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
 bindkey "\e[A" history-beginning-search-backward
 bindkey "\e[B" history-beginning-search-forward
 bindkey "^[[1;3C" forward-word
