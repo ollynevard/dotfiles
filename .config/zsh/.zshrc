@@ -1,12 +1,17 @@
+# Brew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # Zsh extensions
-test -e "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-test -e "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-test -e "/usr/local/share/zsh-completions" && FPATH="/usr/local/share/zsh-completions:$FPATH"
+test -e "/opt/homebrew/opt/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/opt/homebrew/opt/zsh-autosuggestions/zsh-autosuggestions.zsh"
+test -e "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+test -e "/opt/homebrew/opt/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions:$FPATH"
 
 # History
 export HISTFILE="$XDG_DATA_HOME/zsh/history"
 bindkey "\e[A" history-search-backward
 bindkey "\e[B" history-search-forward
+bindkey "^[[1;3C" forward-word
+bindkey "^[[1;3D" backward-word
 
 export WORDCHARS='*?_.[]~=&;!#$%^(){}<>'
 
@@ -20,38 +25,39 @@ autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 
 # Starship Prompt
-test -e "/usr/local/bin/starship" && eval "$(starship init zsh)"
-
-# iTerm2
-test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
+export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"
+test -e "/opt/homebrew/bin/starship" && eval "$(starship init zsh)"
 
 # NVM
 export NVM_DIR="$XDG_CONFIG_HOME/nvm"
-test -e "/usr/local/opt/nvm/nvm.sh" && source "/usr/local/opt/nvm/nvm.sh"
-test -e "/usr/local/opt/nvm/etc/bash_completion.d/nvm" && source "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
+test -e "/opt/homebrew/opt/nvm/nvm.sh" && source "/opt/homebrew/opt/nvm/nvm.sh"
+test -e "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" && source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
 # Vim
-export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
+#export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 
 # Aliases
 alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
-alias l="ls -alh"
-alias ls="ls -G"
+alias g="git"
+alias l="exa --all --long --icons"
+alias ls="exa"
+alias tree="exa --tree --icons"
 alias k="kubectl"
+alias pn="pnpm"
+alias vim="nvim"
 alias v="vim"
 alias t="terraform"
 alias ze="vim ~/.config/zsh/.zshrc"
 alias zr="source ~/.config/zsh/.zshrc"
+alias grep="grep --color=always"
+alias lzd="lazydocker"
+alias pip="pip3"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
 
 # Terraform
 export TF_REGISTRY_CLIENT_TIMEOUT=20
-
-# Brew
-export PATH="/usr/local/sbin:$PATH:$HOME/.local/bin"
-
 
 fzf-git-branch() {
     git rev-parse HEAD > /dev/null 2>&1 || return
@@ -87,5 +93,5 @@ fzf-git-checkout() {
 alias gb='fzf-git-branch'
 alias gco='fzf-git-checkout'
 
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
