@@ -108,3 +108,6 @@ alias gco='fzf-git-checkout'
 
 # [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# MacOS settings
+defaults write org.hammerspoon.Hammerspoon MJConfigFile "$XDG_CONFIG_HOME/hammerspoon/init.lua"
+
