@@ -7,8 +7,8 @@ test -e "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" 
 test -e "/opt/homebrew/opt/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions:$FPATH"
 
 # History
-mkdir -p "$XDG_DATA_HOME/zsh"
-export HISTFILE="$XDG_DATA_HOME/zsh/history"
+mkdir -p "$XDG_STATE_HOME/zsh"
+export HISTFILE="$XDG_STATE_HOME/zsh/history"
 export HISTSIZE=1000000000
 export SAVEHIST=$HISTSIZE
 setopt EXTENDED_HISTORY
