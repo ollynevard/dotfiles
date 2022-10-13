@@ -2,9 +2,9 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Zsh extensions
-test -e "/opt/homebrew/opt/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/opt/homebrew/opt/zsh-autosuggestions/zsh-autosuggestions.zsh"
-test -e "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/opt/homebrew/opt/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-test -e "/opt/homebrew/opt/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions:$FPATH"
+test -e "/opt/homebrew/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/opt/homebrew/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+test -e "/opt/homebrew/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/opt/homebrew/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+test -e "/opt/homebrew/opt/zsh-completions/share/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions/share/zsh-completions:$FPATH"
 
 # History
 mkdir -p "$XDG_STATE_HOME/zsh"
