@@ -62,6 +62,8 @@ alias pip="pip3"
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
 
+export EDITOR=nvim
+
 # Terminfo
 export TERMINFO_DIRS=$TERMINFO_DIRS:$XDG_DATA_HOME/terminfo
 
