@@ -58,6 +58,7 @@ alias zr="source ~/.config/zsh/.zshrc"
 alias grep="grep --color=always"
 alias lzd="lazydocker"
 alias pip="pip3"
+alias rm="trash-put"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
