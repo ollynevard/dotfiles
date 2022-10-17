@@ -1,0 +1,56 @@
+# Apps
+
+ctrl - f : open -a Firefox 
+ctrl + shift - f : open -na Firefox 
+ctrl - k : open -a Kitty
+ctrl + shift - k : open -na Kitty
+ctrl - p : open -a PhpStorm
+ctrl - s : open -a Slack
+ctrl - t : open -a TablePlus
+ctrl - w : open -a Whatsapp
+ctrl - y : open -a YT\ Music
+ctrl - z : open -a Zoom.us
+
+# Yabai ------------------------------------------------------------------------
+
+# Reload config
+ctrl + alt + cmd - r : launchctl kickstart -k "gui/${UID}/homebrew.mxcl.yabai"
+
+# Focus window
+alt - h : yabai -m window --focus west
+alt - j : yabai -m window --focus south
+alt - k : yabai -m window --focus north
+alt - l : yabai -m window --focus east
+
+# Swap managed window
+shift + alt - h : yabai -m window --swap west
+shift + alt - j : yabai -m window --swap south
+shift + alt - k : yabai -m window --swap north
+shift + alt - l : yabai -m window --swap east
+
+# Move managed window
+shift + alt + ctrl - h : yabai -m window --warp west
+shift + alt + ctrl - j : yabai -m window --warp south
+shift + alt + ctrl - k : yabai -m window --warp north
+shift + alt + ctrl - l : yabai -m window --warp east
+
+# Rotate tree
+alt - r : yabai -m space --rotate 90
+
+# Toggle window fullscreen zoom
+alt - f : yabai -m window --toggle zoom-fullscreen
+
+# Toggle padding and gap
+alt - g : yabai -m space --toggle padding && \
+          yabai -m space --toggle gap
+
+# Float / unfloat window and center on screen
+alt - t : yabai -m window --toggle float && \
+          yabai -m window --grid 4:4:1:1:2:2
+
+# Toggle window split type
+alt - e : yabai -m window --toggle split
+
+# Balance size of windows
+shift + alt - 0 : yabai -m space --balance
+
