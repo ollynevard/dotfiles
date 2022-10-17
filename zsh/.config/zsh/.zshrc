@@ -114,4 +114,5 @@ alias gco='fzf-git-checkout'
 
 # MacOS settings
 defaults write org.hammerspoon.Hammerspoon MJConfigFile "$XDG_CONFIG_HOME/hammerspoon/init.lua"
+defaults write com.apple.finder DisableAllAnimations -bool true
 
