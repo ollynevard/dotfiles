@@ -41,6 +41,10 @@ export NVM_DIR="$XDG_CONFIG_HOME/nvm"
 test -e "/opt/homebrew/opt/nvm/nvm.sh" && source "/opt/homebrew/opt/nvm/nvm.sh"
 test -e "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" && source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
+# NPM
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/.npmrc"
+export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+
 # Vim
 #export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 
