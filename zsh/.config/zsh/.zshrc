@@ -1,10 +1,11 @@
 # Brew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
+HOMEBREW_PREFIX=$(brew --prefix)
 
 # Zsh extensions
-test -e "/opt/homebrew/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "/opt/homebrew/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-test -e "/opt/homebrew/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "/opt/homebrew/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-test -e "/opt/homebrew/opt/zsh-completions/share/zsh-completions" && FPATH="/opt/homebrew/opt/zsh-completions/share/zsh-completions:$FPATH"
+test -e "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+test -e "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+test -e "$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions" && FPATH="$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions:$FPATH"
 
 # History
 mkdir -p "$XDG_STATE_HOME/zsh"
@@ -35,16 +36,16 @@ _comp_options+=(globdots)
 # Bash completion
 autoload bashcompinit
 bashcompinit
-complete -C '/opt/homebrew/bin/aws_completer' aws
+complete -C '$HOMEBREW_PREFIX/bin/aws_completer' aws
 
 # Starship Prompt
 export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"
-test -e "/opt/homebrew/bin/starship" && eval "$(starship init zsh)"
+test -e "$HOMEBREW_PREFIX/bin/starship" && eval "$(starship init zsh)"
 
 # NVM
 export NVM_DIR="$XDG_CONFIG_HOME/nvm"
-test -e "/opt/homebrew/opt/nvm/nvm.sh" && source "/opt/homebrew/opt/nvm/nvm.sh"
-test -e "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" && source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+test -e "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" && source "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"
+test -e "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm" && source "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm"
 
 # NPM
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/.npmrc"
@@ -70,6 +71,7 @@ alias lzd="lazydocker"
 alias pip="pip3"
 alias rm="trash-put"
 alias ssh="kitty +kitten ssh"
+alias c="cheat"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
