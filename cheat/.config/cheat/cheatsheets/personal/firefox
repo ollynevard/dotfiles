@@ -1,34 +1,42 @@
 # Firefox
 
-Keyboard shortcuts for Mozilla Firefox
-- https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly
+https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly
+
+## Modifier keys
+
+⌘   Command (or Cmd)
+⌥   Option (or Alt)
+^   Control (or Ctrl)
+⇧   Shift
+fn  Function
 
 ## Navigation
 
-cmd + [            Back
-cmd + ]            Forward
-cmd + R            Reload
-cmd + shift + R    Reload (override cache
-esc                Stop
+⌘ + [      Back
+⌘ + ]      Forward
+⌘ + R      Reload
+⌘ + ⇧ + R  Reload (override cache)
+esc        Stop
 
 ## Windows and tabs
 
-cmd + Q                     Quit
+⌘ + Q              Quit
 
-cmd + N                     New window
-cmd + shift + P             New private window
-cmd + shift + W             Close window
-cmd + shift + N             Undo close window
+⌘ + N              New window
+⌘ + ⇧ + P          New private window
+⌘ + ⇧ + W          Close window
+⌘ + ⇧ + N          Undo close window
 
-cmd + T                     New tab
-cmd + W                     Close tab
-cmd + shift + T             Undo close tab
+⌘ + T              New tab
+⌘ + W              Close tab
+⌘ + ⇧ + T          Undo close tab
 
-ctrl + page up              Go one tab to the left
-ctrl + page down            Go one tab to the right
-ctrl + shift + page up      Move tab left
-ctrl + shift + page down    Move tab right
+^ + page up        Go one tab to the left
+^ + page down      Go one tab to the right
+^ + ⇧ + page up    Move tab left
+^ + ⇧ + page down  Move tab right
 
 ## Miscellaneous
 
-cmd + L    Focus address bar
+⌘ + L  Focus address bar
+

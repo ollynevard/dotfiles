@@ -1,0 +1,28 @@
+# MacOS
+
+https://support.apple.com/en-gb/HT201236
+
+## Modifier keys
+
+⌘   Command (or Cmd)
+⌥   Option (or Alt)
+^   Control (or Ctrl)
+⇧   Shift
+fn  Function
+
+## Window management
+
+⌘ + H      Hide all windows of the focused app
+^ + ⌘ + H  Hide all windows apart from the focused app
+⌘ + W      Close the focused window 
+^ + ⌘ + W  Close all windows of the focused app
+
+## Mission control
+
+^ + →  Navigate to the next desktop
+^ + ←  Navigate to the previous desktop
+^ + ↑  Open mission control
+^ + ↓  Close mission control (if open)
+^ + ↓  Show all windows of the focused app 
+^ + ↑  Return to desktop (after showing windows for focused app)
+
