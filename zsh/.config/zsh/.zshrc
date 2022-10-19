@@ -32,6 +32,11 @@ autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 _comp_options+=(globdots)
 
+# Bash completion
+autoload bashcompinit
+bashcompinit
+complete -C '/opt/homebrew/bin/aws_completer' aws
+
 # Starship Prompt
 export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"
 test -e "/opt/homebrew/bin/starship" && eval "$(starship init zsh)"
@@ -64,6 +69,7 @@ alias grep="grep --color=always"
 alias lzd="lazydocker"
 alias pip="pip3"
 alias rm="trash-put"
+alias ssh="kitty +kitten ssh"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
