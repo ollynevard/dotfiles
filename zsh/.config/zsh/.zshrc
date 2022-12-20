@@ -1,6 +1,5 @@
 # Brew
-eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-HOMEBREW_PREFIX=$(brew --prefix)
+eval "$(brew shellenv)"
 
 # Zsh extensions
 test -e "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -55,6 +54,7 @@ export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 #export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 
 # Aliases
+alias d="docker"
 alias g="git"
 alias l="exa --all --long --icons"
 alias ls="exa"
