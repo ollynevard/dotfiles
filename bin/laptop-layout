@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+SPACES=$(yabai -m query --spaces | jq -re '.[].index')
+
+for SPACE in $SPACES; do
+  yabai -m space $SPACE --layout stack
+  yabai -m space $SPACE --toggle gap 
+  yabai -m space $SPACE --toggle padding 
+done
+
+WINDOWS=$(yabai -m query --windows | jq -re '.[].id')
+
+for WINDOW in $WINDOWS; do
+  yabai -m window $WINDOW --toggle border
+done
+
