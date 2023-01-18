@@ -1,0 +1,112 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = false
+
+format = """
+$fill\
+$cmd_duration\
+$time\ 
+${custom.hr}\
+$directory\
+$git_branch\
+$git_status\
+$git_metrics\
+$all\
+$fill\
+$line_break\
+$line_break\
+$character
+"""
+
+palette = 'catppuccin-mocha'
+
+[palettes.catppuccin-mocha]
+rosewater	= '#f5e0dc'
+flamingo = '#f2cdcd'
+pink = '#f5c2e7'
+mauve = '#cba6f7'
+red	= '#f38ba8'
+maroon = '#eba0ac'
+peach = '#fab387'
+yellow = '#f9e2af'
+green = '#a6e3a1'
+teal = '#94e2d5'
+sky = '#89dceb'
+sapphire = '#74c7ec'
+blue = '#89b4fa'
+lavender = '#b4befe'
+text = '#cdd6f4'
+subtext1 = '#bac2de'
+subtext0 = '#a6adc8'
+overlay2 = '#9399b2'
+overlay1 = '#7f849c'
+overlay0 = '#6c7086'
+surface2 = '#585b70'
+surface1 = '#45475a'
+surface0 = '#313244'
+base = '#1e1e2e'
+mantle = '#181825'
+crust = '#11111b'
+
+[cmd_duration]
+style = 'bold yellow'
+format = ' [took](overlay0) [ $duration]($style)'
+
+[custom.hr]
+command = 'printf "%*s" $(($COLUMNS-2)) | tr " " ─' 
+format = "[ ╮\n╭($output)╯╰ ]($style)"
+style = 'surface0'
+when = true
+
+[directory]
+style = 'bold blue'
+format = '[ $path ]($style)'
+truncation_length = 3
+truncation_symbol = '…/'
+
+[docker_context]
+symbol = ' '
+style = 'bg:#06969A'
+format = '[$symbol $context ]($style) $path'
+
+[fill]
+symbol = ' '
+
+[git_branch]
+format = '[on](overlay0) [$symbol$branch(:remote_branch)]($style) '
+style = 'bold mauve'
+symbol = ' '
+
+[git_metrics]
+added_style = 'bold green'
+deleted_style = 'bold red'
+disabled = false
+format = '([+$added]($added_style) )([-$deleted]($deleted_style) )'
+
+[git_status]
+style = 'bold red'
+format = '([\[$all_status$ahead_behind\]]($style) )'
+
+[nodejs]
+style = 'bold teal'
+format = '[via](overlay0) [$symbol($version)]($style)'
+
+[os]
+disabled = true
+
+[package]
+disabled = true
+
+[terraform]
+format = '[via](overlay0) [$symbol$workspace]($style)'
+style = 'bold teal'
+
+[time]
+disabled = false
+style = 'bold green'
+time_format = '%H:%M' 
+format = ' [at](overlay0) [ $time]($style)'
+
+[username]
+disabled = true
+
