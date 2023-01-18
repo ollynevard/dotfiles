@@ -1,5 +1,5 @@
 # Brew
-eval "$(brew shellenv)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Zsh extensions
 test -e "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -72,6 +72,7 @@ alias pip="pip3"
 alias rm="trash-put"
 alias ssh="kitty +kitten ssh"
 alias c="cheat"
+alias assume="source assume"
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
@@ -81,8 +82,15 @@ export EDITOR=nvim
 # Terminfo
 export TERMINFO_DIRS=$TERMINFO_DIRS:$XDG_DATA_HOME/terminfo
 
+export ZLE_RPROMPT_INDENT=0 # Remove space at end of right prompt
+
 # Terraform
 export TF_REGISTRY_CLIENT_TIMEOUT=20
+
+# Print a newline before commands are executed
+function preexec() {
+  echo ""
+}
 
 fzf-git-branch() {
     git rev-parse HEAD > /dev/null 2>&1 || return
