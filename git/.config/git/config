@@ -1,13 +1,13 @@
 [user]
   name = Olly Nevard
   email = 150187+ollynevard@users.noreply.github.com
-  signingkey = ~/.ssh/github_signing
+#  signingkey = ~/.ssh/github_signing
 
 [core]
   excludesFile = ~/.config/git/ignore
 
 [commit]
-  gpgsign = true
+#  gpgsign = true
 
 [gpg]
   format = ssh
