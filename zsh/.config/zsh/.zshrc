@@ -56,9 +56,9 @@ export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 # Aliases
 alias d="docker"
 alias g="git"
-alias l="exa --all --long --icons"
-alias ls="exa"
-alias tree="exa --tree --icons"
+alias l="eza --all --long --icons"
+alias ls="eza"
+alias tree="eza --tree --icons"
 alias k="kubectl"
 alias pn="pnpm"
 alias vim="nvim"
@@ -132,3 +132,8 @@ alias gco='fzf-git-checkout'
 defaults write org.hammerspoon.Hammerspoon MJConfigFile "$XDG_CONFIG_HOME/hammerspoon/init.lua"
 defaults write com.apple.finder DisableAllAnimations -bool true
 
+
+# pnpm
+export PNPM_HOME="/Users/olly.nevard/.local/share/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end

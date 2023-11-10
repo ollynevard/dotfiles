@@ -2,7 +2,7 @@
 
 # ctrl - f : open -a Firefox 
 # ctrl + shift - f : open -na Firefox 
-# ctrl - k : open -a Kitty
+ctrl - k : open -a Kitty
 ctrl + shift - k : open -na Kitty
 # ctrl - p : open -a PhpStorm
 # ctrl - s : open -a Slack
