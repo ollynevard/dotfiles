@@ -1,26 +1,21 @@
 local wezterm = require 'wezterm'
 
-local config = {}
-
-if wezterm.config_builder then
-  config = wezterm.config_builder()
-end
-
-config.font = wezterm.font 'MonoLisa Nerd Font Mono'
-config.font_size = 16
-config.line_height = 1.4
-config.default_cursor_style = 'BlinkingBar'
-config.color_scheme = 'catppuccin-mocha'
-config.hide_tab_bar_if_only_one_tab = true
-config.use_fancy_tab_bar = false
-config.window_background_opacity = 0.9
-config.window_decorations = 'RESIZE'
-config.window_padding = {
-  left = '40px',
-  right = '40px',
-  top = '40px',
-  bottom = '40px',
+return {
+  color_scheme = 'catppuccin-mocha',
+  default_cursor_style = 'BlinkingBar',
+  font = wezterm.font 'JetBrainsMono Nerd Font',
+  font_size = 16,
+  hide_tab_bar_if_only_one_tab = true,
+  line_height = 1.3,
+  macos_window_background_blur = 30,
+  use_fancy_tab_bar = false,
+  window_background_opacity = 0.9,
+  window_decorations = 'RESIZE',
+  window_padding = {
+    left = '20px',
+    right = '20px',
+    top = '20px',
+    bottom = '20px',
+  }
 }
-
-return config
 
