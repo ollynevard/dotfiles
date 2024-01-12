@@ -136,6 +136,9 @@ defaults write com.apple.finder DisableAllAnimations -bool true
 export PNPM_HOME="/Users/olly.nevard/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
+# zoxide
+eval "$(zoxide init zsh)"
+
 # Add custom scripts to PATH
 export PATH=$PATH:$HOME/bin
 
