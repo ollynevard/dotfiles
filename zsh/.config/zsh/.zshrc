@@ -70,7 +70,7 @@ alias grep="grep --color=always"
 alias lzd="lazydocker"
 alias pip="pip3"
 alias rm="trash-put"
-alias ssh="kitty +kitten ssh"
+#alias ssh="kitty +kitten ssh"
 alias c="cheat"
 alias assume="source assume"
 
