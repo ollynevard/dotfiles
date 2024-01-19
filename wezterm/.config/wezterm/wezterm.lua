@@ -14,7 +14,7 @@ return {
       action = act.ToggleFullScreen
     }
   },
-  line_height = 1.3,
+  line_height = 1.2,
   macos_window_background_blur = 30,
   scrollback_lines = 10000,
   use_fancy_tab_bar = false,
