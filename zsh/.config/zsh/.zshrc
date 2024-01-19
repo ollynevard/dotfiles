@@ -60,7 +60,7 @@ alias l="eza --all --long --icons"
 alias ls="eza"
 alias tree="eza --tree --icons"
 alias k="kubectl"
-alias pn="pnpm"
+alias p="pnpm"
 alias vim="nvim"
 alias v="vim"
 alias t="terraform"
@@ -133,7 +133,7 @@ defaults write org.hammerspoon.Hammerspoon MJConfigFile "$XDG_CONFIG_HOME/hammer
 defaults write com.apple.finder DisableAllAnimations -bool true
 
 # pnpm
-export PNPM_HOME="/Users/olly.nevard/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
 # zoxide
