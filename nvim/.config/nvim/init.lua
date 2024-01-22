@@ -1,22 +1,8 @@
 --
--- Vim options
+-- Plugin manager - https://github.com/folke/lazy.nvim
 --
-
--- Leader
-vim.g.mapleader = " "
-
--- Indentation
-vim.cmd("set expandtab")
-vim.cmd("set tabstop=2")
-vim.cmd("set softtabstop=2")
-vim.cmd("set shiftwidth=2")
-
---
--- Plugins
---
-
--- Set up Lazy package manager - https://github.com/folke/lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     "git",
@@ -27,8 +13,9 @@ if not vim.loop.fs_stat(lazypath) then
     lazypath,
   })
 end
+
 vim.opt.rtp:prepend(lazypath)
 
+require("options")
 require("lazy").setup("plugins")
-
 
