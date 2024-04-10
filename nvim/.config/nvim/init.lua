@@ -1,2 +1,2 @@
-require('user')
-
+require("options")
+require("plugin-manager")
