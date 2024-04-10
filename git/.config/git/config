@@ -1,3 +1,6 @@
+[include]
+  path = delta/catppuccin.gitconfig
+
 [user]
   name = Olly Nevard
   email = 150187+ollynevard@users.noreply.github.com
@@ -5,6 +8,21 @@
 
 [core]
   excludesFile = ~/.config/git/ignore
+  pager = delta
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  navigate = true
+  light = false
+  features = catppuccin-mocha
+
+[merge]
+  conflictstyle = diff3
+
+[diff]
+  colorMoved = default
 
 [commit]
 #  gpgsign = true
