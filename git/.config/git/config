@@ -16,7 +16,7 @@
 [delta]
   navigate = true
   light = false
-  features = catppuccin-mocha
+  features = Catppuccin-mocha
 
 [merge]
   conflictstyle = diff3
