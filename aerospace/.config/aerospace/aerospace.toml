@@ -9,7 +9,10 @@ after-login-command = []
 # You can use it to add commands that run after AeroSpace startup.
 # 'after-startup-command' is run after 'after-login-command'
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
-after-startup-command = ['exec-and-forget sketchybar']
+after-startup-command = [
+  'exec-and-forget sketchybar',
+  'exec-and-forget borders'
+]
 
 # Notify Sketchybar about workspace change
 exec-on-workspace-change = [
@@ -67,7 +70,7 @@ inner.horizontal = 10
 inner.vertical =   10
 outer.left =       10
 outer.bottom =     10
-outer.top =        10
+outer.top =        [{monitor.built-in = 10}, 50]
 outer.right =      10
 
 # 'main' binding mode declaration
@@ -175,11 +178,37 @@ alt-shift-j = ['join-with down', 'mode main']
 alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
-[[on-window-detected]]
-if.app-id = 'com.github.wez.wezterm'
-run = ['move-node-to-workspace 1'] 
+# Find app id using
+# mdls -name kMDItemCFBundleIdentifier /Applications/TablePlus.app | sed 's/.*= "\(.*\)"/\1/'
 
 [[on-window-detected]]
 if.app-id = 'org.mozilla.com.zen.browser'
-run = ['move-node-to-workspace 2'] 
+run = ['move-node-to-workspace 1']
 
+[[on-window-detected]]
+if.app-id = 'com.github.wez.wezterm'
+run = ['move-node-to-workspace 2']
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.VSCode'
+run = ['move-node-to-workspace 3']
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.PhpStorm'
+run = ['move-node-to-workspace 3']
+
+[[on-window-detected]]
+if.app-id = 'com.tinyapp.TablePlus'
+run = ['move-node-to-workspace 4']
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = ['move-node-to-workspace 5']
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.teams2'
+run = ['move-node-to-workspace 6']
+
+[[on-window-detected]]
+if.app-id = 'uk.co.wearecocoon.YT-Music'
+run = ['move-node-to-workspace 9']
