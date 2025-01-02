@@ -7,4 +7,5 @@ background-blur-radius = 20
 macos-window-shadow = false
 macos-titlebar-style = hidden
 window-decoration = false
+copy-on-select = true
 
