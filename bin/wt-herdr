@@ -112,11 +112,14 @@ ensure_group() {
         id=$(jq -r '.result.workspace.workspace_id' <<<"$r")
         tab=$(jq -r '.result.tab.tab_id' <<<"$r")
         [[ -n $id && $id != null ]] || die "could not create herdr workspace: $r"
-        # The workspace must be created in .bare to become the group parent, but
-        # a shell there is useless: swap it for one in the default worktree.
+        # The workspace must be created in .bare to become the group parent, and
+        # herdr only keeps it as the parent while a pane stays in .bare: closing
+        # that tab makes the next `herdr worktree open` create a new ".bare"
+        # parent. So keep it as a background "repo" tab and add the default
+        # worktree's tab next to it.
+        herdr tab rename "$tab" repo >/dev/null || true
         if [[ -d $main ]]; then
             herdr tab create --workspace "$id" --cwd "$main" --label "$(basename "$main")" --no-focus >/dev/null
-            herdr tab close "$tab" >/dev/null
         fi
         gitc config herdr.workspace "$id"
         log "created herdr group '$(label)' ($id)"
