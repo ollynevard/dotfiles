@@ -98,7 +98,7 @@ lock() {
 # reports a parent's worktree identity once a child has opened under it, so a
 # new parent's id is also kept in .bare/config.
 ensure_group() {
-    local id saved r tab main pane
+    local id saved r tab main
     id=$(ws_for_checkout "$COMMON")
     if [[ -z $id ]]; then
         saved=$(gitc config --get herdr.workspace || true)
@@ -112,32 +112,19 @@ ensure_group() {
         id=$(jq -r '.result.workspace.workspace_id' <<<"$r")
         tab=$(jq -r '.result.tab.tab_id' <<<"$r")
         [[ -n $id && $id != null ]] || die "could not create herdr workspace: $r"
-        # The workspace must be created in .bare to become the group parent, but
-        # a shell there is useless: move it to the default worktree. Keep the
-        # pane itself (cd, don't replace the tab): herdr stops treating the
-        # workspace as the parent once its first pane is closed. open_nested()
-        # briefly adds a .bare pane whenever a child is opened.
+        # The workspace must be created in .bare to become the group parent, and
+        # herdr only keeps it as the parent while a pane stays in .bare: closing
+        # that tab makes the next `herdr worktree open` create a new ".bare"
+        # parent. So keep it as a background "repo" tab and add the default
+        # worktree's tab next to it.
+        herdr tab rename "$tab" repo >/dev/null || true
         if [[ -d $main ]]; then
-            pane=$(jq -r '.result.root_pane.pane_id // empty' <<<"$r")
-            herdr tab rename "$tab" "$(basename "$main")" >/dev/null || true
-            [[ -n $pane ]] && herdr pane run "$pane" "cd $(printf '%q' "$main") && clear" >/dev/null || true
+            herdr tab create --workspace "$id" --cwd "$main" --label "$(basename "$main")" --no-focus >/dev/null
         fi
         gitc config herdr.workspace "$id"
         log "created herdr group '$(label)' ($id)"
     fi
     printf '%s' "$id"
-}
-
-# Opens a worktree's workspace nested under the group parent and prints its id.
-# herdr picks the parent by looking for a workspace with a pane whose current
-# directory is .bare; with none, it creates a new ".bare" parent. So give the
-# parent a .bare tab just for the open, then close it. Children stay nested.
-open_nested() {
-    local parent=$1 dir=$2 label=$3 tmp ws
-    tmp=$(herdr tab create --workspace "$parent" --cwd "$COMMON" --label .bare --no-focus | jq -r '.result.tab.tab_id // empty')
-    ws=$(herdr worktree open --cwd "$COMMON" --path "$dir" --label "$label" --no-focus | jq -r '.result.workspace.workspace_id // empty')
-    [[ -n $tmp ]] && herdr tab close "$tmp" >/dev/null
-    printf '%s' "$ws"
 }
 
 # --- Claude folder trust -----------------------------------------------------
@@ -178,7 +165,7 @@ cmd_open() {
     id=$(ensure_group)
     ws=$(ws_for_checkout "$dir")
     if [[ -z $ws && $dir != "$(default_worktree)" ]]; then
-        ws=$(open_nested "$id" "$dir" "${branch##*/}")
+        ws=$(herdr worktree open --cwd "$COMMON" --path "$dir" --label "${branch##*/}" --no-focus | jq -r '.result.workspace.workspace_id')
     fi
     pane=""
     if [[ -n $ws ]]; then
