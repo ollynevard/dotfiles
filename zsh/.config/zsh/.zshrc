@@ -69,7 +69,8 @@ alias pip="pip3"
 alias assume="source assume"
 
 # rm moves files to the macOS Trash (Finder's Put Back works). rm flags are ignored.
-rm() {
+unalias rm 2>/dev/null # an old alias would shadow the function on re-source
+function rm {
   local -a files; local opts=1
   for a in "$@"; do
     if (( opts )) && [[ $a == -- ]]; then opts=0
