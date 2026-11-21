@@ -4,9 +4,6 @@
 [submodule "kitty/.config/kitty/themes/catppuccin"]
 	path = kitty/.config/kitty/themes/catppuccin
 	url = https://github.com/catppuccin/kitty
-[submodule "cheat/.config/cheat/cheatsheets/community"]
-	path = cheat/.config/cheat/cheatsheets/community
-	url = https://github.com/cheat/cheatsheets
 [submodule "git/.config/git/delta"]
 	path = git/.config/git/delta
 	url = git@github.com:catppuccin/delta.git
