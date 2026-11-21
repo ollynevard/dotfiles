@@ -15,10 +15,13 @@ setopt EXTENDED_HISTORY
 setopt HIST_FIND_NO_DUPS
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
+# Emacs keymap. zsh picks vi mode when $EDITOR contains "vi" (nvim).
+bindkey -e
 bindkey "\e[A" history-beginning-search-backward
 bindkey "\e[B" history-beginning-search-forward
 bindkey "^[[1;3C" forward-word
 bindkey "^[[1;3D" backward-word
+bindkey "^U" backward-kill-line
 
 export WORDCHARS='*?_.[]~=&;!#$%^(){}<>'
 
@@ -56,7 +59,7 @@ export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
 # Aliases
 alias d="docker"
 alias g="git"
-alias l="eza --all --long --icons"
+alias l="eza --all --long --icons=auto"
 alias ls="eza"
 alias tree="eza --tree --icons"
 alias k="kubectl"
@@ -91,6 +94,9 @@ export TF_REGISTRY_CLIENT_TIMEOUT=20
 function preexec() {
   echo ""
 }
+
+# fzf
+source <(fzf --zsh)
 
 fzf-git-branch() {
     git rev-parse HEAD > /dev/null 2>&1 || return
@@ -142,3 +148,8 @@ eval "$(zoxide init zsh)"
 # Add custom scripts to PATH
 export PATH=$PATH:$HOME/bin
 
+export PATH="/opt/homebrew/opt/php@8.3/bin:$PATH"
+export PATH="/opt/homebrew/opt/php@8.3/sbin:$PATH"
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
+
+export PATH="$HOME/.local/bin:$PATH"
