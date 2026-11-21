@@ -1,4 +1,3 @@
-nvim/.config/nvim/plugin/packer_compiled.lua
 zsh/.config/zsh/*.local.zsh
 zsh/.config/zsh/.zsh_sessions
 

@@ -50,11 +50,7 @@ test -e "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" && source "$HOMEBREW_PREFIX/opt/nvm/nv
 test -e "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm" && source "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm"
 
 # NPM
-export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/.npmrc"
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
-
-# Vim
-#export VIMINIT='set nocp | let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 
 # Aliases
 alias d="docker"
@@ -68,11 +64,22 @@ alias v="vim"
 alias t="terraform"
 alias ze="vim ~/.config/zsh/.zshrc"
 alias zr="source ~/.config/zsh/.zshrc"
-alias grep="grep --color=always"
+alias grep="grep --color=auto"
 alias pip="pip3"
-alias rm="trash-put"
-#alias ssh="kitty +kitten ssh"
 alias assume="source assume"
+
+# rm moves files to the macOS Trash (Finder's Put Back works). rm flags are ignored.
+rm() {
+  local -a files; local opts=1
+  for a in "$@"; do
+    if (( opts )) && [[ $a == -- ]]; then opts=0
+    elif (( opts )) && [[ $a == -* ]]; then :
+    elif [[ -e $a || -L $a ]]; then files+=("${a/#-/./-}") # trash has no "--"
+    fi
+  done
+  (( ${#files} )) || return 0
+  /usr/bin/trash "${files[@]}"
+}
 
 # Environment
 test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
@@ -129,12 +136,6 @@ fzf-git-checkout() {
 alias gb='fzf-git-branch'
 alias gco='fzf-git-checkout'
 
-# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# MacOS settings
-defaults write org.hammerspoon.Hammerspoon MJConfigFile "$XDG_CONFIG_HOME/hammerspoon/init.lua"
-defaults write com.apple.finder DisableAllAnimations -bool true
-
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
@@ -142,8 +143,5 @@ export PATH="$PNPM_HOME:$PATH"
 # zoxide
 eval "$(zoxide init zsh)"
 
-# Add custom scripts to PATH
-export PATH=$PATH:$HOME/bin
-
-
+# Personal scripts (stowed from dotfiles/bin) and other user-installed tools
 export PATH="$HOME/.local/bin:$PATH"

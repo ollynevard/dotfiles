@@ -32,7 +32,6 @@ brew "ripgrep"
 brew "shellcheck"
 brew "starship"
 brew "stow"
-brew "trash-cli"
 brew "tursodatabase/tap/turso", trusted: true
 brew "worktrunk"
 brew "zoxide"

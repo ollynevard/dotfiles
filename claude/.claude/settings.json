@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__context7__query-docs"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/olly.nevard/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "mattpocock-skills@claude-plugins-official": true
+  },
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "skipAutoPermissionPrompt": true,
+  "agentPushNotifEnabled": true
+}
