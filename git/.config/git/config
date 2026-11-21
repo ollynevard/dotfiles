@@ -62,3 +62,7 @@
 [init]
   defaultBranch = main
 
+[url "git@github.com:ambassador-cruise-line/"]
+  insteadOf = amb://
+  insteadOf = ambassador://
+
