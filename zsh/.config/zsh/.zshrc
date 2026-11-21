@@ -145,8 +145,5 @@ eval "$(zoxide init zsh)"
 # Add custom scripts to PATH
 export PATH=$PATH:$HOME/bin
 
-export PATH="/opt/homebrew/opt/php@8.3/bin:$PATH"
-export PATH="/opt/homebrew/opt/php@8.3/sbin:$PATH"
-export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 
 export PATH="$HOME/.local/bin:$PATH"
