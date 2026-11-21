@@ -24,7 +24,6 @@ brew "mysql-client"
 brew "neovim"
 brew "nvm"
 brew "oven-sh/bun/bun", trusted: true
-brew "php@8.3"
 brew "ripgrep"
 brew "shellcheck"
 brew "starship"

@@ -16,7 +16,7 @@
 [delta]
   navigate = true
   light = false
-  features = Catppuccin-mocha
+  features = catppuccin-mocha
 
 [merge]
   conflictstyle = diff3
@@ -57,7 +57,7 @@
   t = "tag"
 
 [pull]
-  rebase = false
+  rebase = true
 
 [push]
   default = current
