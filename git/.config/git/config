@@ -4,7 +4,7 @@
 [user]
   name = Olly Nevard
   email = 150187+ollynevard@users.noreply.github.com
-  signingkey = ~/.ssh/github_signing.pub
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZE79brG6DVMCuZ5+e5N+1QzkJ+53LUu4KZko4M1pCr
 
 [core]
   excludesFile = ~/.config/git/ignore
@@ -76,4 +76,5 @@
 	helper = 
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [gpg "ssh"]
-	allowedSignersFile = ~/.config/git/allowed_signers
+  allowedSignersFile = ~/.config/git/allowed_signers
+  program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
