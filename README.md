@@ -23,7 +23,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 |-------------|---------------------------------------------------------------|
 | `bat`       | `~/.config/bat`                                               |
 | `bin`       | `~/.local/bin/*` (worktree scripts)                           |
-| `claude`    | `~/.claude/settings.json`, `rules/`, `skills/worktrees`       |
+| `claude`    | `~/.claude/settings.json`, `statusline-command.sh`, `rules/`, `skills/worktrees` |
 | `gh`        | `~/.config/gh/config.yml`                                     |
 | `ghostty`   | `~/.config/ghostty`                                           |
 | `git`       | `~/.config/git`                                               |

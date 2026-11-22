@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/olly.nevard/.claude/hooks/herdr-agent-state.sh' session",
+            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
             "timeout": 10
           }
         ]
@@ -19,10 +19,17 @@
     ]
   },
   "enabledPlugins": {
-    "mattpocock-skills@claude-plugins-official": true
+    "mattpocock-skills@claude-plugins-official": true,
+    "sentry@claude-plugins-official": true,
+    "inngest@anthropic-plugin-directory": true
   },
   "effortLevel": "high",
   "tui": "fullscreen",
   "skipAutoPermissionPrompt": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+  },
+  "switchModelsOnFlag": false
 }
