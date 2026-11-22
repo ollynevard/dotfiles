@@ -1,77 +1,31 @@
 #!/usr/bin/env bash
-# wt-herdr — glue between Worktrunk (git worktrees) and herdr (terminal workspaces)
-# for projects in the bare layout:
+# wt-herdr: glue between Worktrunk (git worktrees) and herdr (terminal workspaces)
+# for Projects in the bare layout (see ~/.local/lib/bare-project.sh).
 #
-#   ~/Code/<project>/.bare      bare repository
-#   ~/Code/<project>/main       default worktree
-#   ~/Code/<project>/<branch>   one worktree per branch ("/" -> "+")
-#
-# In herdr each project is a group: a parent workspace created in .bare (so herdr
-# nests the project's worktree workspaces under it), whose shell tab sits in the
-# default worktree, plus one child workspace per worktree.
+# In herdr each Project has a Project group: a parent workspace created in .bare
+# (so herdr nests the Project's worktree workspaces under it), whose shell tab
+# sits in the default worktree, plus one worktree workspace per worktree.
 #
 # Usage:
-#   wt-herdr group <project-dir>     ensure the project's herdr group exists
-#   wt-herdr open  <worktree-dir>    group + trust the folder in Claude + child workspace
-#   wt-herdr close <worktree-dir>    close the child workspace, drop the Claude trust entry
+#   wt-herdr group <project-dir>     ensure the Project group exists
+#   wt-herdr open  <worktree-dir>    group + trust the folder in Claude + worktree workspace
+#   wt-herdr close <worktree-dir>    close the worktree workspace, drop the Claude trust entry
 #   wt-herdr sync  <dir>             fetch and fast-forward the default worktree
 #
 # open and group print JSON. Every command is idempotent and exits 0 for repos
 # that aren't in the bare layout, so Worktrunk hooks never block normal clones.
-# The group label is `git config herdr.label` in .bare/config, else the folder
-# name capitalised.
 #
 # Bash 3.2 compatible (macOS /bin/bash).
 set -euo pipefail
 
+# shellcheck source-path=SCRIPTDIR source=../lib/bare-project.sh
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../lib/bare-project.sh"
+
 log() { echo "wt-herdr: $*" >&2; }
 die() { log "$*"; exit 1; }
+usage() { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; }
 
-# --- project discovery -------------------------------------------------------
-
-# Sets COMMON (the .bare dir) and ROOT for the directory $1; returns 1 when $1
-# isn't in a bare-layout project.
-load() {
-    local d=$1
-    if [[ -d $d/.bare ]]; then
-        COMMON=$(cd "$d/.bare" && pwd -P)
-    else
-        COMMON=$(git -C "$d" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
-        COMMON=$(cd "$COMMON" && pwd -P)
-    fi
-    [[ $(basename "$COMMON") == .bare ]] || return 1
-    ROOT=$(dirname "$COMMON")
-}
-
-gitc() { git --git-dir="$COMMON" "$@"; }
-
-label() {
-    local l n
-    l=$(gitc config --get herdr.label || true)
-    if [[ -z $l ]]; then
-        n=$(basename "$ROOT")
-        l="$(printf '%s' "${n:0:1}" | tr '[:lower:]' '[:upper:]')${n:1}"
-    fi
-    printf '%s' "$l"
-}
-
-default_branch() {
-    local b
-    b=$(gitc symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)
-    if [[ -z $b ]]; then
-        if gitc show-ref --verify --quiet refs/heads/main; then b=main; else b=master; fi
-    fi
-    printf '%s' "$b"
-}
-
-# Path of the worktree that has the default branch checked out.
-default_worktree() {
-    local b p
-    b=$(default_branch)
-    p=$(gitc worktree list --porcelain | awk -v ref="refs/heads/$b" '
-        /^worktree /{p=substr($0,10)} $0=="branch " ref {print p; exit}')
-    printf '%s' "${p:-$ROOT/${b//\//+}}"
-}
+trust() { project_trust "$1" "$2" || log "could not update Claude trust for $2"; }
 
 # --- herdr -------------------------------------------------------------------
 
@@ -87,28 +41,29 @@ ws_for_checkout() {
 # Serialise group creation: Worktrunk hooks and the orchestrator may race.
 lock() {
     local i=0
-    until mkdir "$COMMON/wt-herdr.lock" 2>/dev/null; do
-        ((++i > 100)) && die "timed out waiting for $COMMON/wt-herdr.lock"
+    until mkdir "$PROJECT_GIT/wt-herdr.lock" 2>/dev/null; do
+        ((++i > 100)) && die "timed out waiting for $PROJECT_GIT/wt-herdr.lock"
         sleep 0.1
     done
-    trap 'rmdir "$COMMON/wt-herdr.lock" 2>/dev/null || true' EXIT
+    trap 'rmdir "$PROJECT_GIT/wt-herdr.lock" 2>/dev/null || true' EXIT
 }
 
 # Prints the group's parent workspace id, creating the group if needed. herdr only
 # reports a parent's worktree identity once a child has opened under it, so a
 # new parent's id is also kept in .bare/config.
 ensure_group() {
-    local id saved r tab main
-    id=$(ws_for_checkout "$COMMON")
+    local id saved r tab main label
+    id=$(ws_for_checkout "$PROJECT_GIT")
     if [[ -z $id ]]; then
-        saved=$(gitc config --get herdr.workspace || true)
+        saved=$(project_git config --get herdr.workspace || true)
         if [[ -n $saved ]] && workspaces | jq -e --arg w "$saved" 'any(.workspace_id == $w and .worktree == null)' >/dev/null; then
             id=$saved
         fi
     fi
     if [[ -z $id ]]; then
-        main=$(default_worktree)
-        r=$(herdr workspace create --cwd "$COMMON" --label "$(label)" --no-focus)
+        main=$(project_default_worktree)
+        label=$(project_label)
+        r=$(herdr workspace create --cwd "$PROJECT_GIT" --label "$label" --no-focus)
         id=$(jq -r '.result.workspace.workspace_id' <<<"$r")
         tab=$(jq -r '.result.tab.tab_id' <<<"$r")
         [[ -n $id && $id != null ]] || die "could not create herdr workspace: $r"
@@ -121,51 +76,35 @@ ensure_group() {
         if [[ -d $main ]]; then
             herdr tab create --workspace "$id" --cwd "$main" --label "$(basename "$main")" --no-focus >/dev/null
         fi
-        gitc config herdr.workspace "$id"
-        log "created herdr group '$(label)' ($id)"
+        project_git config herdr.workspace "$id"
+        log "created herdr group '$label' ($id)"
     fi
     printf '%s' "$id"
-}
-
-# --- Claude folder trust -----------------------------------------------------
-
-# New worktrees of projects the user already works in are pre-trusted so a new
-# Claude session doesn't stop at the "trust this folder?" dialog.
-claude_trust() {
-    local mode=$1 dir=$2 cfg="$HOME/.claude.json" tmp filter
-    [[ -f $cfg ]] || return 0
-    if [[ $mode == add ]]; then
-        filter='.projects[$d] = ((.projects[$d] // {}) + {hasTrustDialogAccepted: true})'
-    else
-        filter='if .projects[$d] then .projects[$d] |= del(.hasTrustDialogAccepted) else . end'
-    fi
-    tmp=$(mktemp "$cfg.wt-herdr.XXXXXX")
-    if jq --arg d "$dir" "$filter" "$cfg" >"$tmp"; then mv "$tmp" "$cfg"; else rm -f "$tmp"; log "could not update Claude trust for $dir"; fi
 }
 
 # --- commands ----------------------------------------------------------------
 
 cmd_group() {
-    load "$1" || die "$1 is not a bare-layout project"
+    project_load "$1" || die "$1 is not a bare-layout project"
     herdr_up || die "herdr is not running"
     lock
     local id
     id=$(ensure_group)
-    jq -n --arg ws "$id" --arg label "$(label)" --arg root "$ROOT" '{workspace_id: $ws, label: $label, project: $root}'
+    jq -n --arg ws "$id" --arg label "$(project_label)" --arg root "$PROJECT_ROOT" '{workspace_id: $ws, label: $label, project: $root}'
 }
 
 cmd_open() {
     local dir branch id ws pane
     dir=$(cd "$1" 2>/dev/null && pwd -P) || die "no such directory: $1"
-    load "$dir" || exit 0
-    claude_trust add "$dir"
+    project_load "$dir" || exit 0
+    trust add "$dir"
     herdr_up || { log "herdr is not running; no workspace opened"; exit 0; }
     branch=$(git -C "$dir" symbolic-ref --short -q HEAD || basename "$dir")
     lock
     id=$(ensure_group)
     ws=$(ws_for_checkout "$dir")
-    if [[ -z $ws && $dir != "$(default_worktree)" ]]; then
-        ws=$(herdr worktree open --cwd "$COMMON" --path "$dir" --label "${branch##*/}" --no-focus | jq -r '.result.workspace.workspace_id')
+    if [[ -z $ws && $dir != "$(project_default_worktree)" ]]; then
+        ws=$(herdr worktree open --cwd "$PROJECT_GIT" --path "$dir" --label "${branch##*/}" --no-focus | jq -r '.result.workspace.workspace_id')
     fi
     pane=""
     if [[ -n $ws ]]; then
@@ -178,8 +117,8 @@ cmd_open() {
 cmd_close() {
     local dir=$1 ws
     [[ -d $dir ]] && dir=$(cd "$dir" && pwd -P)
-    load "$dir" 2>/dev/null || load "$(dirname "$dir")" || exit 0
-    claude_trust remove "$dir"
+    project_load "$dir" || project_load "$(dirname "$dir")" || exit 0
+    trust remove "$dir"
     herdr_up || exit 0
     ws=$(ws_for_checkout "$dir")
     [[ -n $ws ]] || exit 0
@@ -195,10 +134,10 @@ cmd_close() {
 # means the merged check may be stale.
 cmd_sync() {
     local main b
-    load "$1" || exit 0
-    main=$(default_worktree)
-    b=$(default_branch)
-    gitc fetch --quiet --prune origin || { log "fetch failed"; exit 0; }
+    project_load "$1" || exit 0
+    main=$(project_default_worktree)
+    b=$(project_default_branch)
+    project_git fetch --quiet --prune origin || { log "fetch failed"; exit 0; }
     [[ -d $main ]] || exit 0
     git -C "$main" merge --quiet --ff-only "origin/$b" 2>/dev/null ||
         log "could not fast-forward $main to origin/$b; merged checks may be stale"
@@ -209,5 +148,5 @@ case ${1:-} in
         [[ $# -eq 2 ]] || die "usage: wt-herdr $1 <dir>"
         "cmd_$1" "$2"
         ;;
-    *) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    *) usage; exit 2 ;;
 esac

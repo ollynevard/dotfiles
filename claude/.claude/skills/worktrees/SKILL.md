@@ -11,16 +11,17 @@ and agents; `wt-herdr` (run by Worktrunk's hooks) ties them together.
 
 ## Vocabulary
 
-- **Project**: a folder `~/Code/<project>` in the bare layout: `.bare/` (the
-  repository), the **default worktree** (`main/` or `master/`) and one folder per
-  other branch, named after it with `/` → `+`.
-- **Project group**: the project's herdr parent workspace, labelled with the
-  project name, with a shell tab in the default worktree, plus the **worktree
-  workspaces** indented under it in herdr's sidebar, one per worktree.
+Full definitions: `~/Code/dotfiles/GLOSSARY.md`.
+
+- **Project**: `~/Code/<project>` with `.bare/` (the repository), the **default
+  worktree** (`main/` or `master/`) and one worktree folder per other branch.
+- **Project group**: the Project's herdr parent workspace, with the **worktree
+  workspaces** indented under it, one per worktree.
 - **Orchestrator**: the Claude session in the herdr workspace **Control** at
   `~/Code`. It starts and cleans up work; it doesn't edit code.
 
-A folder with `.git/` instead of `.bare/` is a normal clone, not yet a project.
+A folder with `.git/` instead of `.bare/` is a normal clone, not yet a Project.
+Don't build worktree paths yourself: take them from command output.
 
 ## Start work
 
@@ -34,14 +35,14 @@ A folder with `.git/` instead of `.bare/` is a normal clone, not yet a project.
    ```
 
    Drop `--create` for a branch that already exists locally or on origin. The
-   hooks copy the files listed in `main/.worktreeinclude` (`.env`, `auth.json`,
+   JSON's `path` is the worktree folder. The hooks copy the files listed in `main/.worktreeinclude` (`.env`, `auth.json`,
    …), pre-trust the folder in Claude and open the worktree workspace in the
    project group, creating the group if needed. Dependencies are not installed:
    the new session sets the project up itself from its README/CLAUDE.md.
 3. Find the workspace and its pane (idempotent; also repairs a missing one):
 
    ```bash
-   wt-herdr open ~/Code/<project>/<branch-dir>   # → {workspace_id, pane_id, ...}
+   wt-herdr open <path>   # → {workspace_id, pane_id, ...}
    ```
 
 4. Start Claude there and send the opening prompt. Agent name:
@@ -101,5 +102,5 @@ the group.
 - Don't close workspaces, tabs or sessions you didn't create unless asked.
 - Services (Docker, dev servers) usually run from one worktree at a time; ask
   before stopping or switching them.
-- The group label comes from `git --git-dir ~/Code/<project>/.bare config
-  herdr.label`, else the folder name capitalised.
+- To relabel a Project group, set `git --git-dir ~/Code/<project>/.bare config
+  herdr.label "<label>"`; new groups pick it up.

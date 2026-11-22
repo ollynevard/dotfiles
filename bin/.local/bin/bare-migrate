@@ -1,34 +1,33 @@
 #!/usr/bin/env bash
-# bare-migrate — convert a normal clone to the bare layout Worktrunk and wt-herdr
-# expect:
-#
-#   ~/Code/<project>/.bare      bare repository
-#   ~/Code/<project>/<default>  default-branch worktree (main, master, ...)
-#   ~/Code/<project>/<branch>   one worktree per other branch ("/" -> "+")
+# bare-migrate: convert a normal clone to a Project in the bare layout that
+# Worktrunk and wt-herdr expect (see ~/.local/lib/bare-project.sh).
 #
 # Usage: bare-migrate <path|name-under-~/Code> [--label <herdr label>] [--yes]
 #
 # The old tree is kept at <path>-old. Every worktree of the clone must be clean.
 # Local branches with commits origin lacks, git hooks and core.hooksPath carry
 # over; .env, auth.json and .claude/settings.local.json are copied into each
-# worktree and listed in main/.worktreeinclude for Worktrunk. Dependencies are
-# not installed.
+# worktree and listed in <default worktree>/.worktreeinclude for Worktrunk.
+# Dependencies are not installed.
 #
 # Bash 3.2 compatible (macOS /bin/bash).
 set -euo pipefail
+
+# shellcheck source-path=SCRIPTDIR source=../lib/bare-project.sh
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../lib/bare-project.sh"
 
 COPY=(.env auth.json .claude/settings.local.json)
 
 log() { echo "$*" >&2; }
 die() { echo "bare-migrate: $*" >&2; exit 1; }
-dir_name() { printf '%s' "${1//\//+}"; }
+usage() { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; }
 
 src="" yes=0 label=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --yes) yes=1 ;;
         --label) shift; label=${1:-} ;;
-        -h | --help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h | --help) usage; exit 0 ;;
         -*) die "unknown option $1" ;;
         *) src=$1 ;;
     esac
@@ -69,24 +68,20 @@ fi
 
 mv "$src" "$old"
 mkdir "$src"
-ROOT=$src
-gitb() { git --git-dir="$ROOT/.bare" "$@"; }
-git init --quiet --bare "$ROOT/.bare"
-gitb remote add origin "$remote"
-gitb fetch --quiet origin
-gitb remote set-head origin --auto >/dev/null 2>&1 || true
+git init --quiet --bare "$src/.bare"
+project_load "$src" || die "could not load the new project at $src"
+project_git remote add origin "$remote"
+project_git fetch --quiet origin
+project_git remote set-head origin --auto >/dev/null 2>&1 || true
 
-default=$(gitb symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)
-if [[ -z $default ]]; then
-    if gitb show-ref --verify --quiet refs/remotes/origin/main; then default=main; else default=master; fi
-fi
-primary="$ROOT/$(dir_name "$default")"
+default=$(project_default_branch)
+primary=$(project_worktree_dir "$default")
 
 # Keep local branches with commits origin doesn't have.
 while IFS= read -r lb; do
     if ! git -C "$old" show-ref --verify --quiet "refs/remotes/origin/$lb" ||
         [[ -n $(git -C "$old" rev-list "origin/$lb..$lb" 2>/dev/null) ]]; then
-        gitb fetch --quiet "$old/.git" "+refs/heads/$lb:refs/heads/$lb"
+        project_git fetch --quiet "$old/.git" "+refs/heads/$lb:refs/heads/$lb"
         log "  kept local branch $lb"
     fi
 done < <(git -C "$old" for-each-ref --format='%(refname:short)' refs/heads)
@@ -94,11 +89,11 @@ done < <(git -C "$old" for-each-ref --format='%(refname:short)' refs/heads)
 # Git hooks and hook-path config (CaptainHook, husky, ...).
 for h in "$old"/.git/hooks/*; do
     [[ $h == *.sample || ! -f $h ]] && continue
-    cp -p "$h" "$ROOT/.bare/hooks/"
+    cp -p "$h" "$PROJECT_GIT/hooks/"
 done
 hp=$(git -C "$old" config --local core.hooksPath || true)
-[[ -n $hp ]] && gitb config core.hooksPath "$hp"
-[[ -n $label ]] && gitb config herdr.label "$label"
+[[ -n $hp ]] && project_git config core.hooksPath "$hp"
+[[ -n $label ]] && project_set_label "$label"
 
 copy_files() {
     local dir=$1 f
@@ -112,17 +107,17 @@ copy_files() {
 
 # Hooks off: a fresh checkout has no installed deps for hook runners such as
 # CaptainHook or husky to call.
-add() { git --git-dir="$ROOT/.bare" -c core.hooksPath=/dev/null worktree add "$@" >&2; }
+add() { project_git -c core.hooksPath=/dev/null worktree add "$@" >&2; }
 
 add "$primary" "$default"
 copy_files "$primary"
 printf '%s\n' "${COPY[@]}" >"$primary/.worktreeinclude"
-echo .worktreeinclude >>"$ROOT/.bare/info/exclude"
+echo .worktreeinclude >>"$PROJECT_GIT/info/exclude"
 
 for b in ${wts[@]+"${wts[@]}"} ${cur:+"$cur"}; do
-    dir="$ROOT/$(dir_name "$b")"
+    dir=$(project_worktree_dir "$b")
     [[ $b == "$default" || -d $dir ]] && continue
-    if gitb show-ref --verify --quiet "refs/heads/$b"; then
+    if project_git show-ref --verify --quiet "refs/heads/$b"; then
         add "$dir" "$b"
     else
         add --track -b "$b" "$dir" "origin/$b"
@@ -132,14 +127,11 @@ for b in ${wts[@]+"${wts[@]}"} ${cur:+"$cur"}; do
 done
 
 # The project root and default worktree are trusted like any other worktree.
-if [[ -f $HOME/.claude.json ]]; then
-    tmp=$(mktemp "$HOME/.claude.json.bare-migrate.XXXXXX")
-    if jq --arg r "$ROOT" --arg p "$primary" \
-        'reduce ($r, $p) as $d (.; .projects[$d] = ((.projects[$d] // {}) + {hasTrustDialogAccepted: true}))' \
-        "$HOME/.claude.json" >"$tmp"; then mv "$tmp" "$HOME/.claude.json"; else rm -f "$tmp"; fi
-fi
+for d in "$PROJECT_ROOT" "$primary"; do
+    project_trust add "$d" || log "  could not update Claude trust for $d"
+done
 
-gitb worktree list >&2
+project_git worktree list >&2
 log ""
 log "Done. Next: reinstall dependencies / restart services from $primary,"
 log "and copy anything else the old tree needs from $old."

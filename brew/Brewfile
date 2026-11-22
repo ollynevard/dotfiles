@@ -10,6 +10,7 @@ tap "tursodatabase/tap"
 brew "ambassador-cruise-line/tap/amb", trusted: true
 brew "atuin"
 brew "awscli"
+brew "bats-core"
 brew "bat"
 brew "btop"
 brew "cloudflared"

@@ -2,6 +2,8 @@
 # sibling directory per branch with "/" -> "+", and a herdr workspace nested
 # under the project's group (see ~/Code/dotfiles/bin/.local/bin/wt-herdr). Normal clones
 # keep Worktrunk's default path; wt-herdr ignores them.
+# The "/" -> "+" rule is owned by project_worktree_dir in
+# ~/.local/lib/bare-project.sh; this template can't call it, so keep them in step.
 worktree-path = "{% if repo == '.bare' %}{{ repo_path }}/../{{ branch | replace('/', '+') }}{% else %}{{ repo_path }}/../{{ repo }}.{{ branch | sanitize }}{% endif %}"
 
 # Commands in one hook section run concurrently, so dependent steps are chained.

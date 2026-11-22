@@ -23,7 +23,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 |-------------|---------------------------------------------------------------|
 | `atuin`     | `~/.config/atuin/config.toml`                                 |
 | `bat`       | `~/.config/bat`                                               |
-| `bin`       | `~/.local/bin/*` (worktree scripts)                           |
+| `bin`       | `~/.local/bin/*` (worktree scripts), `~/.local/lib/bare-project.sh` |
 | `claude`    | `~/.claude/settings.json`, `statusline-command.sh`, `rules/`, `skills/worktrees` |
 | `gh`        | `~/.config/gh/config.yml`                                     |
 | `ghostty`   | `~/.config/ghostty`                                           |
@@ -36,6 +36,16 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 | `starship`  | `~/.config/starship`                                          |
 | `worktrunk` | `~/.config/worktrunk`                                         |
 | `zsh`       | `~/.zshenv`, `~/.config/zsh`                                  |
+
+## Tests
+
+```sh
+bats test/
+```
+
+`test/` covers the worktree scripts and their shared Project module
+(`bin/.local/lib/bare-project.sh`) against throwaway repos, plus shellcheck. It
+isn't a Stow package. Terms are defined in [GLOSSARY.md](GLOSSARY.md).
 
 ## Not tracked
 
