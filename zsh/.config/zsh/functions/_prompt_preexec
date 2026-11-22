@@ -1,0 +1,21 @@
+# _prompt_preexec: print a blank line before each command's output, and note
+# where the cursor is so the next prompt can tell whether the command printed
+# anything (see _prompt_check_output). At the bottom row, scroll one line first
+# so output always moves the cursor; the spare line is empty and the prompt
+# draws over it.
+print
+_prompt_last_cmd=$1
+_prompt_mark=
+(( _prompt_cursor_off )) && return
+# Keys already waiting belong to the command about to run: asking for the
+# cursor would read them first, so skip the check for this command.
+zselect -t 0 -r 0 && return
+if _prompt_cursor; then
+  if (( ${REPLY%;*} >= LINES )); then
+    print -n '\n\e[A'
+    REPLY="$(( LINES - 1 ));${REPLY#*;}"
+  fi
+  _prompt_mark=$REPLY
+else
+  _prompt_cursor_off=1 # terminal didn't answer: stop asking
+fi

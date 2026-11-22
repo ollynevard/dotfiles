@@ -63,7 +63,7 @@ complete -C "$HOMEBREW_PREFIX/bin/aws_completer" aws
 # Ctrl-R wins.
 
 (( $+commands[mise] )) && eval "$(mise activate zsh)" # runtimes; prepends to PATH at each prompt
-(( $+commands[starship] )) && eval "$(starship init zsh)"
+(( $+commands[starship] )) && eval "$(starship init zsh)" && _prompt_setup # see functions/_prompt_*
 source ~/.orbstack/shell/init.zsh 2>/dev/null || : # docker CLI
 
 (( $+commands[fzf] )) && source <(fzf --zsh)
@@ -73,11 +73,6 @@ source ~/.orbstack/shell/init.zsh 2>/dev/null || : # docker CLI
 # $XDG_DATA_HOME/atuin only if that folder exists, otherwise in ~/.atuin.
 mkdir -p "$XDG_DATA_HOME/atuin"
 (( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"
-
-# Print a blank line before each command's output
-autoload -Uz add-zsh-hook
-_blank_line_before_output() { echo }
-add-zsh-hook preexec _blank_line_before_output
 
 # 4. Aliases -------------------------------------------------------------------
 

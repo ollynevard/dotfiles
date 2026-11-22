@@ -1,0 +1,12 @@
+# _prompt_check_output: if the cursor hasn't moved since the command started,
+# it printed nothing. The blank line before output is already there, so the
+# prompt skips its own. Also hands back any keys typed during the command.
+typeset -g _prompt_skip_blank=0
+if [[ -n $_prompt_mark ]] && _prompt_cursor && [[ $REPLY == $_prompt_mark ]]; then
+  _prompt_skip_blank=1
+fi
+_prompt_mark=
+if [[ -n $_prompt_typeahead ]]; then
+  print -z -- "$_prompt_typeahead"
+  _prompt_typeahead=
+fi

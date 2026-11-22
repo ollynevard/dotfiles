@@ -1,0 +1,18 @@
+# _prompt_cursor: ask the terminal where the cursor is; sets REPLY to
+# "row;col". Keys typed ahead of the terminal's answer are kept and given back
+# to the next command line by _prompt_check_output.
+local c buf= ret=1
+stty -echo </dev/tty # else the reply is echoed before read can take it
+print -n '\e[6n' >/dev/tty
+while read -r -s -k 1 -t 0.3 c; do
+  buf+=$c
+  if [[ $buf =~ $'\e\\[([0-9]+);([0-9]+)R$' ]]; then
+    buf=${buf[1,MBEGIN-1]}
+    REPLY="${match[1]};${match[2]}"
+    ret=0
+    break
+  fi
+done
+stty echo </dev/tty
+_prompt_typeahead+=$buf
+return ret

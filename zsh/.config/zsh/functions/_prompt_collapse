@@ -1,0 +1,7 @@
+# _prompt_collapse: swap the prompt just accepted for its collapsed version,
+# the same approach as powerlevel10k's transient prompt. Runs on zle
+# line-finish (Enter, Ctrl-C, any accept).
+[[ $_prompt_text == "$_prompt_short" ]] && return
+_prompt_text=$_prompt_short
+zle .reset-prompt
+zle -R

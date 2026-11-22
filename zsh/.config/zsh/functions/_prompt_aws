@@ -1,0 +1,12 @@
+# _prompt_aws: show the AWS profile, as a red pill for prod. Starship can't
+# style by profile name, so split $AWS_PROFILE into the two variables that
+# env_var.STARSHIP_AWS and env_var.STARSHIP_AWS_PROD show in starship.toml.
+# Exported (unlike the rule for .zshrc) because starship runs as a child
+# process and only sees exported variables; they're reset every prompt.
+unset STARSHIP_AWS STARSHIP_AWS_PROD
+[[ -n $AWS_PROFILE ]] || return 0
+if [[ ${(L)AWS_PROFILE} == *prod* ]]; then
+  export STARSHIP_AWS_PROD=$AWS_PROFILE
+else
+  export STARSHIP_AWS=$AWS_PROFILE
+fi

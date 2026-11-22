@@ -1,31 +1,33 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# Five lines:
+#   1. blank
+#   2. a rule ending in how the previous command went: ✓/✘, took, at
+#   3. where you are: host, folder, git, then whatever $all finds
+#   4. blank
+#   5. ❯
+# functions/_prompt_collapse drops line 3 once you press Enter, so scrollback
+# keeps every result and command but not the context line. _prompt_render
+# finds line 3 by position (third from last): keep the two in step.
 add_newline = false
 
+# Line breaks are $line_break, not literal newlines: $all adds every module
+# not named here, line_break included.
 format = """
-$fill\
-$cmd_duration\
-$time\ 
-${custom.hr}\
-$directory\
-$git_branch\
-$git_status\
-$git_metrics\
-$all\
-$fill\
 $line_break\
+$fill$status$cmd_duration$time[ ─](surface1)$line_break\
+$username$hostname$directory$git_branch$git_status$git_metrics$git_state$git_commit$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
 $line_break\
-$character
-"""
+$character"""
 
 palette = 'catppuccin-mocha'
 
 [palettes.catppuccin-mocha]
-rosewater	= '#f5e0dc'
+rosewater = '#f5e0dc'
 flamingo = '#f2cdcd'
 pink = '#f5c2e7'
 mauve = '#cba6f7'
-red	= '#f38ba8'
+red = '#f38ba8'
 maroon = '#eba0ac'
 peach = '#fab387'
 yellow = '#f9e2af'
@@ -48,73 +50,584 @@ base = '#1e1e2e'
 mantle = '#181825'
 crust = '#11111b'
 
-[cmd_duration]
-style = 'bold yellow'
-format = ' [took](overlay0) [ $duration]($style)'
-
-[custom.hr]
-command = 'printf "%*s" $(($COLUMNS-2)) | tr " " ─' 
-format = "[ ─╮\n╭($output)╯╰─ ]($style)"
-style = 'surface0'
-when = true
-
-[directory]
-style = 'bold blue'
-format = '[ $path ]($style)'
-truncation_length = 3
-truncation_symbol = '…/'
-
-[docker_context]
-disabled = true
-symbol = ' '
-style = 'bg:#06969A'
-format = '[$symbol $context ]($style) $path'
+# Line 2: the rule ---------------------------------------------------------
 
 [fill]
-symbol = ' '
+symbol = '─'
+style = 'surface1'
 
-[git_branch]
-format = '[on](overlay0) [$symbol$branch(:remote_branch)]($style) '
-style = 'bold mauve'
-symbol = ' '
-
-[git_metrics]
-added_style = 'bold green'
-deleted_style = 'bold red'
+# ✓ on success. On failure: ✘ alone for ordinary errors, words for the codes
+# that mean something (not found, interrupted…), the number for anything else.
+[status]
 disabled = false
-format = '([+$added]($added_style) )([-$deleted]($deleted_style) )'
+map_symbol = true
+recognize_signal_code = true
+success_symbol = '✓'
+symbol = '✘'
+not_found_symbol = '✘ not found'
+not_executable_symbol = '✘ not executable'
+sigint_symbol = '✘ interrupted'
+signal_symbol = '✘ signal'
+success_style = 'bold green'
+failure_style = 'bold red'
+format = ' [$symbol( $maybe_int)]($style)'
 
-[git_status]
-style = 'bold red'
-format = '([\[$all_status$ahead_behind\]]($style) )'
-
-[gcloud]
-disabled = true
-
-[nodejs]
-style = 'bold teal'
-format = '[via](overlay0) [$symbol($version)]($style)'
-disabled = true
-
-[os]
-disabled = true
-
-[package]
-disabled = true
-
-[php]
-disabled = true
-
-[terraform]
-format = '[via](overlay0) [$symbol$workspace]($style)'
-style = 'bold teal'
+[cmd_duration]
+style = 'bold yellow'
+format = ' [took](overlay0) [$duration]($style)'
 
 [time]
 disabled = false
-style = 'bold green'
-time_format = '%H:%M' 
-format = ' [at](overlay0) [ $time]($style)'
+style = 'subtext0'
+time_format = '%H:%M'
+format = ' [at](overlay0) [$time]($style)'
 
-[username]
+# Line 5: ❯ ----------------------------------------------------------------
+# One colour always: the rule already shows how the last command went.
+
+[character]
+success_symbol = '[❯](bold green)'
+error_symbol = '[❯](bold green)'
+
+# Line 3: context, as pills ----------------------------------------------
+# Each pill: a rounded cap glyph (Nerd Font), the text with no padding, then a
+# closing cap. Pills that touch (the git ones) are fused into one ribbon with
+# round dividers by functions/_prompt_render; the others keep a space so they
+# stay separate. Folder and branch are solid; git details sit on surface0 with
+# coloured text so they read as detail. Each git detail starts with a space:
+# one at the start, one between, none at the end.
+
+[hostname]
+style = 'bg:peach fg:crust bold'
+format = '[](fg:peach)[$ssh_symbol$hostname]($style)[](fg:peach) '
+
+[directory]
+style = 'bg:blue fg:crust bold'
+format = '[](fg:blue)[ $path$read_only]($style)[](fg:blue) '
+truncation_length = 3
+truncation_symbol = '…/'
+read_only = ' 󰌾'
+
+[git_branch]
+style = 'bg:mauve fg:crust bold'
+format = '[](fg:mauve)[$symbol$branch(:$remote_branch)]($style)[](fg:mauve)'
+symbol = ' '
+truncation_length = 30
+truncation_symbol = '…'
+
+[git_status]
+style = 'bg:surface0 fg:peach bold'
+format = '([](fg:surface0)[$all_status$ahead_behind]($style)[](fg:surface0))'
+conflicted = '  $count'
+stashed = '  $count'
+deleted = '  $count'
+renamed = '  $count'
+modified = '  $count'
+typechanged = ' ~$count'
+staged = '  $count'
+untracked = '  $count'
+ahead = ' $count'
+behind = ' $count'
+diverged = ' $ahead_count$behind_count'
+
+[git_metrics]
+disabled = false
+added_style = 'bg:surface0 fg:green bold'
+deleted_style = 'bg:surface0 fg:red bold'
+format = '([](fg:surface0)[ +$added]($added_style)[](fg:surface0))([](fg:surface0)[ -$deleted]($deleted_style)[](fg:surface0))'
+
+[git_state]
+style = 'bg:surface0 fg:yellow bold'
+format = '([](fg:surface0)[ $state( $progress_current/$progress_total)]($style)[](fg:surface0))'
+
+[git_commit] # shown when HEAD is detached, e.g. mid-rebase
+style = 'bg:surface0 fg:overlay2 bold'
+format = '([](fg:surface0)[  $hash$tag]($style)[](fg:surface0))'
+
+[terraform]
+style = 'bg:teal fg:crust bold'
+format = ' [](fg:teal)[$symbol$workspace]($style)[](fg:teal)'
+
+[jobs]
+style = 'bg:sky fg:crust bold'
+number_threshold = 1
+format = ' [](fg:sky)[$symbol$number]($style)[](fg:sky)'
+
+# Runtimes and tools: grey pills with coloured text, like nodejs. The AWS
+# pills read variables set by functions/_prompt_aws (in the format line above).
+
+[env_var.STARSHIP_AWS] # set from $AWS_PROFILE by functions/_prompt_aws
+style = 'bg:surface0 fg:peach bold'
+format = ' [](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_AWS_PROD] # any profile with "prod" in its name
+style = 'bg:red fg:crust bold'
+format = ' [](fg:red)[ $env_value]($style)[](fg:red)'
+
+[aws] # replaced by the env_var pills above
 disabled = true
 
+[python]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)( \($virtualenv\))]($style)[](fg:surface0)'
+
+[golang]
+style = 'bg:surface0 fg:sapphire bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[rust]
+style = 'bg:surface0 fg:peach bold'
+symbol = '󱘗 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[ruby]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[java]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[deno]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[bun]
+style = 'bg:surface0 fg:rosewater bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[nodejs]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+# Every other module, generated from starship's defaults: same content, as a
+# grey pill with coloured text like nodejs. Battery, Claude's modules and the
+# jj/fossil/hg metrics keep their own look.
+
+[azure]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol($subscription)]($style)[](fg:surface0)'
+
+[buf]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[c]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version(-$name))]($style)[](fg:surface0)'
+
+[cmake]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[cobol]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[conda]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$environment]($style)[](fg:surface0)'
+
+[container]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol \[$name\]]($style)[](fg:surface0)'
+
+[cpp]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version(-$name))]($style)[](fg:surface0)'
+
+[crystal]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[daml]
+style = 'bg:surface0 fg:teal bold'
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[dart]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[direnv]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$loaded/$allowed]($style)[](fg:surface0)'
+
+[docker_context]
+disabled = true
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$context]($style)[](fg:surface0)'
+
+[dotnet]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)( 🎯 $tfm)]($style)[](fg:surface0)'
+
+[elixir]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version \(OTP $otp_version\))]($style)[](fg:surface0)'
+
+[elm]
+style = 'bg:surface0 fg:teal bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[erlang]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[fennel]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[fortran]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version(-$name))]($style)[](fg:surface0)'
+
+[fossil_branch]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$branch]($style)[](fg:surface0)'
+
+[gcloud]
+disabled = true
+style = 'bg:surface0 fg:blue bold'
+symbol = '󱇶 '
+format = ' [](fg:surface0)[$symbol$account(@$domain)( \($region\))]($style)[](fg:surface0)'
+
+[gleam]
+style = 'bg:surface0 fg:pink bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[gradle]
+style = 'bg:surface0 fg:teal bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[guix_shell]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol]($style)[](fg:surface0)'
+
+[haskell]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[haxe]
+style = 'bg:surface0 fg:peach bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[helm]
+style = 'bg:surface0 fg:text bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[hg_branch]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$branch(:$topic)]($style)[](fg:surface0)'
+
+[jj_bookmark]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$bookmark(@$remote)$diverged( \(+$overflow_count others\))]($style)[](fg:surface0)'
+
+[julia]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[kotlin]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[kubernetes]
+style = 'bg:surface0 fg:teal bold'
+symbol = '󱃾 '
+format = ' [](fg:surface0)[$symbol$context( \($namespace\))]($style)[](fg:surface0)'
+
+[localip]
+style = 'bg:surface0 fg:yellow bold'
+format = ' [](fg:surface0)[$localipv4]($style)[](fg:surface0)'
+
+[lua]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[maven]
+style = 'bg:surface0 fg:teal bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[memory_usage]
+style = 'bg:surface0 fg:text bold'
+symbol = '󰍛 '
+format = ' [](fg:surface0)[$symbol$ram( | $swap)]($style)[](fg:surface0)'
+
+[meson]
+style = 'bg:surface0 fg:blue bold'
+symbol = '󰔷 '
+format = ' [](fg:surface0)[$symbol$project]($style)[](fg:surface0)'
+
+[mise]
+style = 'bg:surface0 fg:mauve bold'
+format = ' [](fg:surface0)[$symbol$health]($style)[](fg:surface0)'
+
+[mojo]
+style = 'bg:surface0 fg:peach bold'
+symbol = '󰈸 '
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[nats]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol($name)]($style)[](fg:surface0)'
+
+[netns]
+style = 'bg:surface0 fg:blue bold'
+symbol = '󰛳 '
+format = ' [](fg:surface0)[$symbol \[$name\]]($style)[](fg:surface0)'
+
+[nim]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[nix_shell]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$state( \($name\))]($style)[](fg:surface0)'
+
+[ocaml]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)( \($switch_indicator$switch_name\))]($style)[](fg:surface0)'
+
+[odin]
+style = 'bg:surface0 fg:sapphire bold'
+symbol = '󰟢 '
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[opa]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[openstack]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$cloud(\($project\))]($style)[](fg:surface0)'
+
+[os]
+disabled = true
+style = 'bg:surface0 fg:text bold'
+format = ' [](fg:surface0)[$symbol]($style)[](fg:surface0)'
+
+[package]
+disabled = true
+style = 'bg:surface0 fg:peach bold'
+symbol = '󰏗 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol$version]($style)[](fg:surface0)'
+
+[perl]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[php]
+disabled = true
+style = 'bg:surface0 fg:lavender bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[pijul_channel]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$channel]($style)[](fg:surface0)'
+
+[pixi]
+style = 'bg:surface0 fg:yellow bold'
+symbol = '󰏗 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)( \($environment\))]($style)[](fg:surface0)'
+
+[pulumi]
+style = 'bg:surface0 fg:mauve bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($username@)$stack]($style)[](fg:surface0)'
+
+[purescript]
+style = 'bg:surface0 fg:text bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[quarto]
+style = 'bg:surface0 fg:sapphire bold'
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[raku]
+style = 'bg:surface0 fg:green bold'
+symbol = '󱖊 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version-$vm_version)]($style)[](fg:surface0)'
+
+[red]
+style = 'bg:surface0 fg:red bold'
+symbol = '󱍼 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[rlang]
+style = 'bg:surface0 fg:blue bold'
+symbol = '󰟔 '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[scala]
+style = 'bg:surface0 fg:red bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[shell]
+style = 'bg:surface0 fg:text bold'
+format = ' [](fg:surface0)[$indicator]($style)[](fg:surface0)'
+
+[shlvl]
+style = 'bg:surface0 fg:yellow bold'
+symbol = '󰹍 '
+format = ' [](fg:surface0)[$symbol$shlvl]($style)[](fg:surface0)'
+
+[singularity]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol\[$env\]]($style)[](fg:surface0)'
+
+[solidity]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[spack]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[$symbol$environment]($style)[](fg:surface0)'
+
+[sudo]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+format = ' [](fg:surface0)[as $symbol]($style)[](fg:surface0)'
+
+[swift]
+style = 'bg:surface0 fg:peach bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[typst]
+style = 'bg:surface0 fg:teal bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[vagrant]
+style = 'bg:surface0 fg:teal bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[vcsh]
+style = 'bg:surface0 fg:yellow bold'
+format = ' [](fg:surface0)[$symbol$repo]($style)[](fg:surface0)'
+
+[vlang]
+style = 'bg:surface0 fg:blue bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[xmake]
+style = 'bg:surface0 fg:green bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[zig]
+style = 'bg:surface0 fg:yellow bold'
+symbol = ' '
+version_format = '${major}.${minor}'
+format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
+
+[username] # shows only when root (red) or over SSH
+disabled = false
+style_root = 'bold red'
+style_user = 'bold overlay2'
+format = '[$user]($style) '

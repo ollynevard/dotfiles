@@ -55,7 +55,7 @@ setting in the file read by the shells that need it:
 | `~/.zshenv`                  | every zsh, including scripts and `zsh -c` | Exports (`EDITOR`, XDG and tool dirs, Homebrew) and `PATH`. No output, no subprocesses. |
 | `~/.config/zsh/.zprofile`    | login shells (every new tab on macOS) | Only restores our `PATH` order after macOS's `/etc/zprofile` reshuffles it. |
 | `~/.config/zsh/.zshrc`       | interactive shells               | Options, history, key bindings, completion, prompt, tool hooks, aliases. |
-| `~/.config/zsh/functions/*`  | interactive shells, on first call | One function per file, body only, named after the function. |
+| `~/.config/zsh/functions/*`  | interactive shells, on first call | One function per file, body only, named after the function. (Trap functions such as `TRAPWINCH` can't be autoloaded, so `_prompt_setup` defines its own.) |
 | `~/.config/zsh/*.local.zsh`  | interactive shells, near the end | Machine-specific settings and secrets. Not tracked.       |
 
 `~/.zshenv` sets `ZDOTDIR`, which is how zsh finds the rest in `~/.config/zsh`.
@@ -71,6 +71,29 @@ they belong in.
 
 `rm` is a function that moves files to the macOS Trash, so Finder's Put Back
 works. `command rm` deletes for real.
+
+### Prompt
+
+Starship draws the prompt (layout and colours in `starship.toml`), and the
+`_prompt_*` functions, wired up by `_prompt_setup` right after `starship init`,
+add what Starship can't do on its own:
+
+- **Collapsing.** When you press Enter, the prompt shrinks to its rule (the
+  previous command's result and time) and `❯ cmd`, so scrollback keeps every
+  command and result without repeating the folder and git line. The prompt is
+  rendered once per prompt in precmd rather than by Starship on every redraw.
+- **Ribbon.** Pills that touch (the git ones) are fused into one ribbon: a
+  closing cap followed by an opening cap becomes a single round divider.
+- **Blank lines.** A blank line goes before each command's output. To avoid a
+  double blank after commands that print nothing, the shell asks the terminal
+  for the cursor position before and after each command, and the prompt skips
+  its own blank line when the cursor hasn't moved. If the terminal doesn't
+  answer, the check switches off for that shell after a 0.3s wait.
+- **AWS.** `_prompt_aws` copies `$AWS_PROFILE` into one of two variables so a
+  profile with `prod` in its name (any case) shows as a red pill and any other
+  as grey.
+- **Notifications.** `_prompt_notify` sends a macOS notification when a command
+  took 30 seconds or more.
 
 ## Tests
 

@@ -1,0 +1,8 @@
+# _prompt_notify: send a macOS notification when a command took 30s or more.
+# Runs once per prompt from precmd (starship's own notifications would fire
+# again on every window resize, since TRAPWINCH re-renders the prompt).
+(( ${STARSHIP_DURATION:-0} >= 30000 )) || return 0
+local secs=$(( STARSHIP_DURATION / 1000 ))
+osascript -e 'on run argv' \
+  -e 'display notification (item 1 of argv) with title "Command finished"' \
+  -e 'end run' "${_prompt_last_cmd:0:80} (${secs}s)" &>/dev/null &!

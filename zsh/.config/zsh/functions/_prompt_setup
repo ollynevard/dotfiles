@@ -1,0 +1,40 @@
+# _prompt_setup: wire up the starship prompt. Run right after `starship init`.
+# Layout is in starship.toml.
+#
+# - Each prompt collapses to the rule and ❯ once Enter is pressed.
+# - Starship's PROMPT re-runs `starship prompt` on every redraw. Instead, it's
+#   rendered once per prompt in precmd and shown via $_prompt_text, so the
+#   collapsed rule keeps the time it was drawn at and redraws (completion
+#   menus, Ctrl-L) don't spawn starship. PROMPT='$_prompt_text' is expanded
+#   once, so a `$` in a branch or folder name is never run as code.
+# - A blank line goes before each command's output, and the prompt skips its
+#   own blank line when the command printed nothing.
+
+# State shared by the _prompt_* functions:
+typeset -g _prompt_template=$PROMPT # starship's PROMPT: $(starship prompt …)
+typeset -g _prompt_text=            # the prompt as shown
+typeset -g _prompt_short=           # the collapsed version
+typeset -g _prompt_mark=            # cursor "row;col" when the command started
+typeset -g _prompt_typeahead=       # keys read while asking for the cursor
+typeset -gi _prompt_skip_blank=0    # 1: the command printed nothing
+typeset -gi _prompt_cursor_off=0    # 1: terminal ignores cursor queries
+typeset -g _prompt_last_cmd=        # for _prompt_notify
+
+unset RPROMPT # no right_format, so no second starship per prompt
+PROMPT='$_prompt_text'
+zmodload zsh/zselect # _prompt_preexec checks for pending keys
+autoload -Uz add-zsh-hook add-zle-hook-widget
+# precmd order matters: starship's own hook (added by init) records $? and the
+# duration first.
+add-zsh-hook precmd _prompt_check_output
+add-zsh-hook precmd _prompt_notify
+add-zsh-hook precmd _prompt_aws
+add-zsh-hook precmd _prompt_render
+add-zsh-hook preexec _prompt_preexec
+add-zle-hook-widget line-finish _prompt_collapse # Enter, Ctrl-C, any accept
+# Redraw the rule at the new width when the window is resized. Defined here,
+# not in its own file: autoloading a function doesn't install it as a trap.
+TRAPWINCH() {
+  _prompt_render
+  zle && zle .reset-prompt
+}
