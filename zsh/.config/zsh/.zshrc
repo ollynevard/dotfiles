@@ -1,26 +1,20 @@
-# Drop duplicate PATH/FPATH entries (e.g. when the shell is nested or re-sourced)
-typeset -U PATH path FPATH fpath
+# Read by interactive shells only, after ~/.zshenv (exports, PATH) and
+# .zprofile. Keep exports out of here: scripts and `zsh -c` never see them.
+#
+# The stages below run in this order on purpose; each says what depends on it.
+# See "Shell" in the README for which file gets what.
 
-# Brew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# 1. Options, history, keys ----------------------------------------------------
 
-# Zsh extensions
-test -e "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-test -e "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" && source "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-test -e "$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions" && FPATH="$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions:$FPATH"
+mkdir -p "$XDG_STATE_HOME"/{zsh,mycli} "$XDG_CACHE_HOME/zsh"
 
-# History
-mkdir -p "$XDG_STATE_HOME"/{zsh,mycli}
-export HISTFILE="$XDG_STATE_HOME/zsh/history"
-export HISTSIZE=1000000000
-export SAVEHIST=$HISTSIZE
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+HISTSIZE=1000000000
+SAVEHIST=$HISTSIZE
 setopt EXTENDED_HISTORY
 setopt HIST_FIND_NO_DUPS
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
-# Other tools' history files (mycli's are set in ~/.config/mycli/myclirc)
-export LESSHISTFILE="$XDG_STATE_HOME/lesshst"
-export NODE_REPL_HISTORY="$XDG_STATE_HOME/node_repl_history"
 
 # Emacs keymap. zsh picks vi mode when $EDITOR contains "vi" (nvim).
 bindkey -e
@@ -30,41 +24,63 @@ bindkey "^[[1;3C" forward-word
 bindkey "^[[1;3D" backward-word
 bindkey "^U" backward-kill-line
 
-export WORDCHARS='*?_.[]~=&;!#$%^(){}<>'
+WORDCHARS='*?_.[]~=&;!#$%^(){}<>'
+ZLE_RPROMPT_INDENT=0 # no space after the right prompt
 
-# Completion
-# - Zsh Docs: http://zsh.sourceforge.net/Doc/Release/Completion-System.html#Completion-System
-# - Zsh Guide: http://zsh.sourceforge.net/Guide/zshguide06.html#l144
-mkdir -p "$XDG_CACHE_HOME/zsh"
+# 2. Functions and completion --------------------------------------------------
+# fpath must be complete before compinit runs.
+
+# Our functions, one per file in functions/, loaded on first call. unfunction
+# first, so `zr` picks up edits to a function that's already loaded.
+fpath=("$ZDOTDIR/functions" $fpath)
+for f in "$ZDOTDIR"/functions/*(N:t); do
+  unfunction "$f" 2>/dev/null
+  autoload -Uz "$f"
+done
+unset f
+
+# Completion definitions from Homebrew formulae and zsh-completions
+fpath+=("$HOMEBREW_PREFIX/share/zsh/site-functions")
+[[ -d $HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions ]] &&
+  fpath+=("$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions")
+
+# - Zsh Docs: https://zsh.sourceforge.io/Doc/Release/Completion-System.html
+# - Zsh Guide: https://zsh.sourceforge.io/Guide/zshguide06.html
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' special-dirs false
-autoload -Uz compinit
 zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
+autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 _comp_options+=(globdots)
 
-# Bash completion
-autoload bashcompinit
+# Bash-style completers
+autoload -Uz bashcompinit
 bashcompinit
-complete -C '$HOMEBREW_PREFIX/bin/aws_completer' aws
+complete -C "$HOMEBREW_PREFIX/bin/aws_completer" aws
 
-# Starship Prompt
-export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"
-test -e "$HOMEBREW_PREFIX/bin/starship" && eval "$(starship init zsh)"
+# 3. Tool hooks ----------------------------------------------------------------
+# Each adds prompt hooks or key bindings. Keep fzf before atuin, so atuin's
+# Ctrl-R wins.
 
-# mise (node, pnpm and other runtimes; global versions in ~/.config/mise/config.toml)
-command -v mise > /dev/null && eval "$(mise activate zsh)"
+(( $+commands[mise] )) && eval "$(mise activate zsh)" # runtimes; prepends to PATH at each prompt
+(( $+commands[starship] )) && eval "$(starship init zsh)"
+source ~/.orbstack/shell/init.zsh 2>/dev/null || : # docker CLI
 
-# NPM
-export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+(( $+commands[fzf] )) && source <(fzf --zsh)
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)"
 
-# Go
-export GOPATH="$XDG_DATA_HOME/go"
+# atuin owns Ctrl-R; Up keeps the prefix search from stage 1. Its data goes in
+# $XDG_DATA_HOME/atuin only if that folder exists, otherwise in ~/.atuin.
+mkdir -p "$XDG_DATA_HOME/atuin"
+(( $+commands[atuin] )) && eval "$(atuin init zsh --disable-up-arrow)"
 
-# OrbStack: docker CLI and shell integration
-source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+# Print a blank line before each command's output
+autoload -Uz add-zsh-hook
+_blank_line_before_output() { echo }
+add-zsh-hook preexec _blank_line_before_output
 
-# Aliases
+# 4. Aliases -------------------------------------------------------------------
+
 alias d="docker"
 alias g="git"
 alias l="eza --all --long --icons=auto"
@@ -74,104 +90,31 @@ alias p="pnpm"
 alias vim="nvim"
 alias v="vim"
 alias t="terraform"
-alias ze="vim ~/.config/zsh/.zshrc"
-alias zr="source ~/.config/zsh/.zshrc"
+alias ze='vim "$ZDOTDIR/.zshrc"'
+alias zr='source "$ZDOTDIR/.zshrc"'
 alias grep="grep --color=auto"
 alias htop="btop"
 alias lg="lazygit"
 alias lzd="lazydocker"
 alias pip="pip3"
 alias assume="source assume"
+alias gb="fzf-git-branch"
+alias gco="fzf-git-checkout"
 
-# rm moves files to the macOS Trash (Finder's Put Back works). rm flags are ignored.
-unalias rm 2>/dev/null # an old alias would shadow the function on re-source
-function rm {
-  local -a files; local opts=1
-  for a in "$@"; do
-    if (( opts )) && [[ $a == -- ]]; then opts=0
-    elif (( opts )) && [[ $a == -* ]]; then :
-    elif [[ -e $a || -L $a ]]; then files+=("${a/#-/./-}") # trash has no "--"
-    fi
-  done
-  (( ${#files} )) || return 0
-  /usr/bin/trash "${files[@]}"
-}
+# 5. Machine-specific settings and secrets (not tracked) ----------------------
+# After everything above so they can override it.
 
-# Environment
-test -e "$ZDOTDIR/env.local.zsh" && source "$ZDOTDIR/env.local.zsh"
+for f in "$ZDOTDIR"/*.local.zsh(N); do source "$f"; done
+unset f
 
-export EDITOR=nvim
+# 6. Line-editor plugins (last) ------------------------------------------------
+# zsh-syntax-highlighting must be sourced last: it wraps the line-editor
+# widgets that exist when it loads, including those fzf, zoxide and atuin added.
 
-# Terminfo
-export TERMINFO_DIRS=$TERMINFO_DIRS:$XDG_DATA_HOME/terminfo
-
-export ZLE_RPROMPT_INDENT=0 # Remove space at end of right prompt
-
-# Terraform
-export TF_REGISTRY_CLIENT_TIMEOUT=20
-
-# Print a newline before commands are executed
-function preexec() {
-  echo ""
-}
-
-# fzf
-command -v fzf > /dev/null && source <(fzf --zsh)
-
-fzf-git-branch() {
-    git rev-parse HEAD > /dev/null 2>&1 || return
-
-    git branch --color=always --all --sort=-committerdate |
-        grep -v HEAD |
-        fzf --height 50% --ansi --no-multi --preview-window right:65% \
-            --preview 'git log -n 50 --color=always --date=short --pretty="format:%C(auto)%cd %h%d %s" $(sed "s/.* //" <<< {})' |
-        sed "s/.* //"
-}
-
-fzf-git-checkout() {
-    git rev-parse HEAD > /dev/null 2>&1 || return
-
-    local branch
-
-    branch=$(fzf-git-branch)
-    if [[ "$branch" = "" ]]; then
-        echo "No branch selected."
-        return
-    fi
-
-    # If branch name starts with 'remotes/' then it is a remote branch. By
-    # using --track and a remote branch name, it is the same as:
-    # git checkout -b branchName --track origin/branchName
-    if [[ "$branch" = 'remotes/'* ]]; then
-        git checkout --track $branch
-    else
-        git checkout $branch;
-    fi
-}
-
-alias gb='fzf-git-branch'
-alias gco='fzf-git-checkout'
-
-# pnpm
-export PNPM_HOME="$HOME/.local/share/pnpm"
-export PATH="$PNPM_HOME:$PATH"
-
-# zoxide
-command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
-
-# atuin: owns Ctrl-R (must come after fzf). Up arrow keeps the prefix search above.
-# Data goes in $XDG_DATA_HOME/atuin only if that folder exists; otherwise atuin uses ~/.atuin.
-mkdir -p "$XDG_DATA_HOME/atuin"
-command -v atuin > /dev/null && eval "$(atuin init zsh --disable-up-arrow)"
-
-# yazi: `y` opens yazi and cds to wherever you quit it
-function y() {
-  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-  yazi "$@" --cwd-file="$tmp"
-  IFS= read -r -d '' cwd < "$tmp"
-  [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-  command rm -f -- "$tmp" # bypass the trash-backed rm function
-}
-
-# Personal scripts (stowed from dotfiles/bin) and other user-installed tools
-export PATH="$HOME/.local/bin:$PATH"
+for f in \
+  "$HOMEBREW_PREFIX/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+do
+  [[ -r $f ]] && source "$f"
+done
+unset f

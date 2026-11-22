@@ -43,7 +43,34 @@ isn't linked until you re-run `install` (or `stow -R <pkg>`).
 | `ssh`       | `~/.ssh/config`                                               |
 | `starship`  | `~/.config/starship`                                          |
 | `worktrunk` | `~/.config/worktrunk`                                         |
-| `zsh`       | `~/.zshenv`, `~/.config/zsh`                                  |
+| `zsh`       | `~/.zshenv`, `~/.config/zsh/` (see [Shell](#shell))           |
+
+## Shell
+
+zsh reads several startup files, each for a different kind of shell. Put each
+setting in the file read by the shells that need it:
+
+| File                         | Read by                          | Put here                                                  |
+|------------------------------|----------------------------------|-----------------------------------------------------------|
+| `~/.zshenv`                  | every zsh, including scripts and `zsh -c` | Exports (`EDITOR`, XDG and tool dirs, Homebrew) and `PATH`. No output, no subprocesses. |
+| `~/.config/zsh/.zprofile`    | login shells (every new tab on macOS) | Only restores our `PATH` order after macOS's `/etc/zprofile` reshuffles it. |
+| `~/.config/zsh/.zshrc`       | interactive shells               | Options, history, key bindings, completion, prompt, tool hooks, aliases. |
+| `~/.config/zsh/functions/*`  | interactive shells, on first call | One function per file, body only, named after the function. |
+| `~/.config/zsh/*.local.zsh`  | interactive shells, near the end | Machine-specific settings and secrets. Not tracked.       |
+
+`~/.zshenv` sets `ZDOTDIR`, which is how zsh finds the rest in `~/.config/zsh`.
+
+`.zshrc` runs in numbered stages, and the order matters: `fpath` is complete
+before `compinit`, fzf loads before atuin (so atuin gets Ctrl-R), local files
+can override everything, and zsh-syntax-highlighting loads last because it
+wraps the key bindings that exist when it loads. Add new things to the stage
+they belong in.
+
+`zr` re-sources `.zshrc`, including edited functions. A new file in
+`functions/` needs `stow -R zsh` (or `./install`) first.
+
+`rm` is a function that moves files to the macOS Trash, so Finder's Put Back
+works. `command rm` deletes for real.
 
 ## Tests
 
@@ -52,7 +79,10 @@ bats test/
 ```
 
 `test/` covers the worktree scripts and their shared Project module
-(`bin/.local/lib/bare-project.sh`) against throwaway repos, plus shellcheck. It
+(`bin/.local/lib/bare-project.sh`) against throwaway repos, plus shellcheck.
+`zsh.bats` starts the zsh package in a throwaway HOME: every file parses, an
+interactive shell starts without printing anything, `zsh -c` gets the
+environment and `PATH`, and `rm` sends the right files to the Trash. `test/`
 isn't a Stow package. Terms are defined in [GLOSSARY.md](GLOSSARY.md).
 
 ## Not tracked

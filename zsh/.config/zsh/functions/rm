@@ -1,0 +1,14 @@
+# rm: move files to the macOS Trash instead of deleting them (Finder's Put Back
+# works). rm's own flags (-r, -f, ...) are accepted and ignored; `--` ends them.
+# Names that don't exist are skipped, as with rm -f.
+# $RM_TRASH overrides the trash command (the tests point it at a stub).
+local -a files
+local a opts=1
+for a in "$@"; do
+  if (( opts )) && [[ $a == -- ]]; then opts=0
+  elif (( opts )) && [[ $a == -* ]]; then :
+  elif [[ -e $a || -L $a ]]; then files+=("${a/#-/./-}") # trash has no "--"
+  fi
+done
+(( ${#files} )) || return 0
+"${RM_TRASH:-/usr/bin/trash}" "${files[@]}"

@@ -1,0 +1,16 @@
+# fzf-git-checkout: pick a branch with fzf-git-branch and check it out. A
+# remote branch (remotes/origin/x) gets a local tracking branch.
+git rev-parse HEAD > /dev/null 2>&1 || return
+
+local branch
+branch=$(fzf-git-branch)
+if [[ -z $branch ]]; then
+  echo "No branch selected."
+  return
+fi
+
+if [[ $branch == remotes/* ]]; then
+  git checkout --track "$branch"
+else
+  git checkout "$branch"
+fi
