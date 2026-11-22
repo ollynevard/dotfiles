@@ -53,6 +53,7 @@ setting in the file read by the shells that need it:
 | File                         | Read by                          | Put here                                                  |
 |------------------------------|----------------------------------|-----------------------------------------------------------|
 | `~/.zshenv`                  | every zsh, including scripts and `zsh -c` | Exports (`EDITOR`, XDG and tool dirs, Homebrew) and `PATH`. No output, no subprocesses. |
+| `~/.config/zsh/.zshenv`      | nested shells, which inherit `ZDOTDIR` and so skip `~/.zshenv` | Only sources `~/.zshenv`. |
 | `~/.config/zsh/.zprofile`    | login shells (every new tab on macOS) | Only restores our `PATH` order after macOS's `/etc/zprofile` reshuffles it. |
 | `~/.config/zsh/.zshrc`       | interactive shells               | Options, history, key bindings, completion, prompt, tool hooks, aliases. |
 | `~/.config/zsh/functions/*`  | interactive shells, on first call | One function per file, body only, named after the function. (Trap functions such as `TRAPWINCH` can't be autoloaded, so `_prompt_setup` defines its own.) |

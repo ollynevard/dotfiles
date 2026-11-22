@@ -25,7 +25,7 @@ shell() {
 }
 
 @test "startup files and functions parse" {
-    for f in "$ZSH_PKG/.zshenv" "$ZDOT/.zprofile" "$ZDOT/.zshrc"; do
+    for f in "$ZSH_PKG/.zshenv" "$ZDOT/.zshenv" "$ZDOT/.zprofile" "$ZDOT/.zshrc"; do
         zsh -n "$f" || { echo "syntax error in $f"; return 1; }
     done
     for f in "$ZDOT"/functions/*; do
@@ -45,6 +45,18 @@ $(cat "$f")
     [ -d /opt/homebrew ] || skip "no Homebrew"
     run shell -lc 'print -l $path'
     [ "$status" -eq 0 ]
+    brew=$(grep -nx /opt/homebrew/bin <<<"$output" | cut -d: -f1)
+    usr=$(grep -nx /usr/bin <<<"$output" | cut -d: -f1)
+    [ -n "$brew" ] && [ -n "$usr" ] && [ "$brew" -lt "$usr" ]
+}
+
+@test "nested login shells (ZDOTDIR inherited) still read ~/.zshenv" {
+    [ -d /opt/homebrew ] || skip "no Homebrew"
+    # A shell started from another one inherits the exported ZDOTDIR, so zsh
+    # reads $ZDOTDIR/.zshenv instead of ~/.zshenv (herdr panes, exec zsh -l).
+    run env -i HOME="$HOME" TERM=xterm-256color ZDOTDIR="$HOME/.config/zsh" zsh -lc 'print -l $path'
+    [ "$status" -eq 0 ]
+    [[ $output != *"not found"* ]] || { echo "$output"; return 1; }
     brew=$(grep -nx /opt/homebrew/bin <<<"$output" | cut -d: -f1)
     usr=$(grep -nx /usr/bin <<<"$output" | cut -d: -f1)
     [ -n "$brew" ] && [ -n "$usr" ] && [ "$brew" -lt "$usr" ]
