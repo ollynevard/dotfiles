@@ -9,7 +9,7 @@ git clone --recurse-submodules git@github.com:ollynevard/dotfiles.git ~/Code/dot
 cd ~/Code/dotfiles
 
 brew bundle --file brew/Brewfile
-stow bat bin claude gh ghostty git nvim ssh starship worktrunk zsh
+stow bat bin claude gh ghostty git mise nvim ssh starship worktrunk zsh
 ./macos.sh
 ```
 
@@ -26,6 +26,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 | `gh`        | `~/.config/gh/config.yml`                                     |
 | `ghostty`   | `~/.config/ghostty`                                           |
 | `git`       | `~/.config/git`                                               |
+| `mise`      | `~/.config/mise`                                              |
 | `nvim`      | `~/.config/nvim`                                              |
 | `ssh`       | `~/.ssh/config`                                               |
 | `starship`  | `~/.config/starship`                                          |

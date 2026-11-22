@@ -44,10 +44,8 @@ complete -C '$HOMEBREW_PREFIX/bin/aws_completer' aws
 export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship/starship.toml"
 test -e "$HOMEBREW_PREFIX/bin/starship" && eval "$(starship init zsh)"
 
-# NVM
-export NVM_DIR="$XDG_CONFIG_HOME/nvm"
-test -e "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" && source "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"
-test -e "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm" && source "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion.d/nvm"
+# mise (node, pnpm and other runtimes; global versions in ~/.config/mise/config.toml)
+command -v mise > /dev/null && eval "$(mise activate zsh)"
 
 # NPM
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
@@ -65,6 +63,9 @@ alias t="terraform"
 alias ze="vim ~/.config/zsh/.zshrc"
 alias zr="source ~/.config/zsh/.zshrc"
 alias grep="grep --color=auto"
+alias htop="btop"
+alias lg="lazygit"
+alias lzd="lazydocker"
 alias pip="pip3"
 alias assume="source assume"
 
@@ -143,6 +144,18 @@ export PATH="$PNPM_HOME:$PATH"
 
 # zoxide
 eval "$(zoxide init zsh)"
+
+# atuin: owns Ctrl-R (must come after fzf). Up arrow keeps the prefix search above.
+command -v atuin > /dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+
+# yazi: `y` opens yazi and cds to wherever you quit it
+function y() {
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  yazi "$@" --cwd-file="$tmp"
+  IFS= read -r -d '' cwd < "$tmp"
+  [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+  command rm -f -- "$tmp" # bypass the trash-backed rm function
+}
 
 # Personal scripts (stowed from dotfiles/bin) and other user-installed tools
 export PATH="$HOME/.local/bin:$PATH"
