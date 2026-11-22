@@ -13,17 +13,17 @@ git clone git@github.com:ollynevard/dotfiles.git ~/Code/dotfiles
 
 1. Installs the Xcode Command Line Tools and Homebrew if they're missing, then
    the Brewfile (`--no-brew` skips this).
-2. Creates the folders other tools keep untracked files in (`REAL_DIRS` in the
-   script), so Stow links the files inside them rather than the whole folder.
-3. Dry-runs Stow over every top-level folder except `brew` and `test`, and
+2. Dry-runs Stow over every top-level folder except `brew` and `test`, and
    stops if an existing file is in the way. Otherwise it restows them all.
-4. Runs `macos.sh` and `mise install`, then lists the manual sign-in steps.
+3. Runs `macos.sh` and `mise install`, then lists the manual sign-in steps.
 
 `.stowrc` sets `--target=~`. Without it, Stow would link into the repo's
-parent (`~/Code`), because the repo isn't directly under `~`.
+parent (`~/Code`), because the repo isn't directly under `~`. It also sets
+`--no-folding`: Stow makes every folder a real directory and links only files,
+so files other tools write next to their config stay out of the repo.
 
-A new package is just a new top-level folder. If the tool also writes its own
-files into that config folder, add the folder to `REAL_DIRS`.
+A new package is just a new top-level folder. A new file in an existing package
+isn't linked until you re-run `install` (or `stow -R <pkg>`).
 
 ## Packages
 

@@ -12,22 +12,6 @@ cd "$REPO"
 # Top-level folders that aren't Stow packages.
 NOT_PACKAGES=" brew test "
 
-# Folders that must exist as real directories before stowing, because other
-# tools keep untracked files in them. Without these Stow would symlink the
-# whole folder into the repo, and those tools' state would land in git.
-REAL_DIRS=(
-    "$HOME/.config"
-    "$HOME/.config/atuin"
-    "$HOME/.config/gh"
-    "$HOME/.config/mycli"
-    "$HOME/.config/omniwm"
-    "$HOME/.local/bin"
-    "$HOME/.local/lib"
-    "$HOME/.claude"
-    "$HOME/.claude/skills"
-    "$HOME/.ssh"
-)
-
 brew=1
 for arg in "$@"; do
     case $arg in
@@ -69,16 +53,10 @@ fi
 
 command -v stow >/dev/null || die "stow isn't installed (brew install stow)"
 
-step "Directories"
-for dir in "${REAL_DIRS[@]}"; do
-    if [ -L "$dir" ]; then
-        warn "$dir is a symlink; Stow may have folded it. Remove it and re-run."
-    else
-        mkdir -p "$dir"
-    fi
-done
+# Stow creates missing folders itself (.stowrc sets --no-folding, so it never
+# links a whole folder), but ~/.ssh must be private before anything lands in it.
+mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
-echo "${#REAL_DIRS[@]} folders in place."
 
 step "Linking"
 packages=()
