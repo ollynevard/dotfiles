@@ -1,6 +1,2 @@
 zsh/.config/zsh/*.local.zsh
-zsh/.config/zsh/.zsh_sessions
-
-zsh/.config/zsh/.zcompcache
-
 omniwm/.config/omniwm/settings.toml.*

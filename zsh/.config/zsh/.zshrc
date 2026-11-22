@@ -32,6 +32,7 @@ mkdir -p "$XDG_CACHE_HOME/zsh"
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' special-dirs false
 autoload -Uz compinit
+zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 _comp_options+=(globdots)
 
@@ -49,6 +50,12 @@ command -v mise > /dev/null && eval "$(mise activate zsh)"
 
 # NPM
 export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+
+# Go
+export GOPATH="$XDG_DATA_HOME/go"
+
+# OrbStack: docker CLI and shell integration
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 
 # Aliases
 alias d="docker"
@@ -146,6 +153,8 @@ export PATH="$PNPM_HOME:$PATH"
 eval "$(zoxide init zsh)"
 
 # atuin: owns Ctrl-R (must come after fzf). Up arrow keeps the prefix search above.
+# Data goes in $XDG_DATA_HOME/atuin only if that folder exists; otherwise atuin uses ~/.atuin.
+mkdir -p "$XDG_DATA_HOME/atuin"
 command -v atuin > /dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 
 # yazi: `y` opens yazi and cds to wherever you quit it

@@ -9,8 +9,8 @@ git clone --recurse-submodules git@github.com:ollynevard/dotfiles.git ~/Code/dot
 cd ~/Code/dotfiles
 
 brew bundle --file brew/Brewfile
-mkdir -p ~/.config/omniwm  # so Stow links the file, not the whole folder
-stow bat bin claude gh ghostty git mise nvim omniwm ssh starship worktrunk zsh
+mkdir -p ~/.config/atuin ~/.config/omniwm  # so Stow links the files, not the whole folders
+stow atuin bat bin claude gh ghostty git mise nvim omniwm ssh starship worktrunk zsh
 ./macos.sh
 ```
 
@@ -21,6 +21,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 
 | Package     | Links to                                                      |
 |-------------|---------------------------------------------------------------|
+| `atuin`     | `~/.config/atuin/config.toml`                                 |
 | `bat`       | `~/.config/bat`                                               |
 | `bin`       | `~/.local/bin/*` (worktree scripts)                           |
 | `claude`    | `~/.claude/settings.json`, `statusline-command.sh`, `rules/`, `skills/worktrees` |
@@ -37,6 +38,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 
 ## Not tracked
 
+- `~/.local/share/atuin/`: Atuin's history database and sync key.
 - `~/.config/zsh/*.local.zsh`: machine-specific environment and secrets.
 - `~/.ssh/config.d/*`: work and other private hosts, pulled in by `Include`.
 - `~/.config/gh/hosts.yml`: GitHub auth token.
