@@ -1,3 +1,0 @@
-[submodule "git/.config/git/delta"]
-	path = git/.config/git/delta
-	url = git@github.com:catppuccin/delta.git

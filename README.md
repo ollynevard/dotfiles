@@ -5,17 +5,25 @@ macOS dotfiles, one [GNU Stow](https://www.gnu.org/software/stow/) package per t
 ## Setup
 
 ```sh
-git clone --recurse-submodules git@github.com:ollynevard/dotfiles.git ~/Code/dotfiles
-cd ~/Code/dotfiles
-
-brew bundle --file brew/Brewfile
-mkdir -p ~/.config/atuin ~/.config/mycli ~/.config/omniwm ~/.local/lib  # so Stow links the files, not the whole folders
-stow atuin bat bin claude gh ghostty git mise mycli nvim omniwm ssh starship worktrunk zsh
-./macos.sh
+git clone git@github.com:ollynevard/dotfiles.git ~/Code/dotfiles
+~/Code/dotfiles/install
 ```
+
+`install` is safe to re-run, and is also how you pick up new packages. It:
+
+1. Installs the Xcode Command Line Tools and Homebrew if they're missing, then
+   the Brewfile (`--no-brew` skips this).
+2. Creates the folders other tools keep untracked files in (`REAL_DIRS` in the
+   script), so Stow links the files inside them rather than the whole folder.
+3. Dry-runs Stow over every top-level folder except `brew` and `test`, and
+   stops if an existing file is in the way. Otherwise it restows them all.
+4. Runs `macos.sh` and `mise install`, then lists the manual sign-in steps.
 
 `.stowrc` sets `--target=~`. Without it, Stow would link into the repo's
 parent (`~/Code`), because the repo isn't directly under `~`.
+
+A new package is just a new top-level folder. If the tool also writes its own
+files into that config folder, add the folder to `REAL_DIRS`.
 
 ## Packages
 
