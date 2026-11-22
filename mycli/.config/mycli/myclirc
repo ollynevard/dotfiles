@@ -1,0 +1,7 @@
+# Overrides only; mycli loads its packaged defaults first.
+# Full reference: mycli --help, or the myclirc bundled with mycli.
+
+[main]
+# XDG state dir; ~/.config/zsh/.zshrc creates ~/.local/state/mycli
+history_file = ~/.local/state/mycli/history
+log_file = ~/.local/state/mycli/mycli.log

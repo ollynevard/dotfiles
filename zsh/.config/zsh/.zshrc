@@ -1,3 +1,6 @@
+# Drop duplicate PATH/FPATH entries (e.g. when the shell is nested or re-sourced)
+typeset -U PATH path FPATH fpath
+
 # Brew
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -7,7 +10,7 @@ test -e "$HOMEBREW_PREFIX/opt/zsh-syntax-highlighting/share/zsh-syntax-highlight
 test -e "$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions" && FPATH="$HOMEBREW_PREFIX/opt/zsh-completions/share/zsh-completions:$FPATH"
 
 # History
-mkdir -p "$XDG_STATE_HOME/zsh"
+mkdir -p "$XDG_STATE_HOME"/{zsh,mycli}
 export HISTFILE="$XDG_STATE_HOME/zsh/history"
 export HISTSIZE=1000000000
 export SAVEHIST=$HISTSIZE
@@ -15,6 +18,10 @@ setopt EXTENDED_HISTORY
 setopt HIST_FIND_NO_DUPS
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
+# Other tools' history files (mycli's are set in ~/.config/mycli/myclirc)
+export LESSHISTFILE="$XDG_STATE_HOME/lesshst"
+export NODE_REPL_HISTORY="$XDG_STATE_HOME/node_repl_history"
+
 # Emacs keymap. zsh picks vi mode when $EDITOR contains "vi" (nvim).
 bindkey -e
 bindkey "\e[A" history-beginning-search-backward
@@ -109,7 +116,7 @@ function preexec() {
 }
 
 # fzf
-source <(fzf --zsh)
+command -v fzf > /dev/null && source <(fzf --zsh)
 
 fzf-git-branch() {
     git rev-parse HEAD > /dev/null 2>&1 || return
@@ -150,7 +157,7 @@ export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
 # zoxide
-eval "$(zoxide init zsh)"
+command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
 
 # atuin: owns Ctrl-R (must come after fzf). Up arrow keeps the prefix search above.
 # Data goes in $XDG_DATA_HOME/atuin only if that folder exists; otherwise atuin uses ~/.atuin.

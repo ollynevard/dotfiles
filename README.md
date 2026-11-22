@@ -9,8 +9,8 @@ git clone --recurse-submodules git@github.com:ollynevard/dotfiles.git ~/Code/dot
 cd ~/Code/dotfiles
 
 brew bundle --file brew/Brewfile
-mkdir -p ~/.config/atuin ~/.config/omniwm  # so Stow links the files, not the whole folders
-stow atuin bat bin claude gh ghostty git mise nvim omniwm ssh starship worktrunk zsh
+mkdir -p ~/.config/atuin ~/.config/mycli ~/.config/omniwm  # so Stow links the files, not the whole folders
+stow atuin bat bin claude gh ghostty git mise mycli nvim omniwm ssh starship worktrunk zsh
 ./macos.sh
 ```
 
@@ -29,6 +29,7 @@ parent (`~/Code`), because the repo isn't directly under `~`.
 | `ghostty`   | `~/.config/ghostty`                                           |
 | `git`       | `~/.config/git`                                               |
 | `mise`      | `~/.config/mise`                                              |
+| `mycli`     | `~/.config/mycli/myclirc`                                     |
 | `nvim`      | `~/.config/nvim`                                              |
 | `omniwm`    | `~/.config/omniwm/settings.toml`                              |
 | `ssh`       | `~/.ssh/config`                                               |
