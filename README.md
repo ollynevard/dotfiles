@@ -9,7 +9,7 @@ git clone --recurse-submodules git@github.com:ollynevard/dotfiles.git ~/Code/dot
 cd ~/Code/dotfiles
 
 brew bundle --file brew/Brewfile
-mkdir -p ~/.config/atuin ~/.config/mycli ~/.config/omniwm  # so Stow links the files, not the whole folders
+mkdir -p ~/.config/atuin ~/.config/mycli ~/.config/omniwm ~/.local/lib  # so Stow links the files, not the whole folders
 stow atuin bat bin claude gh ghostty git mise mycli nvim omniwm ssh starship worktrunk zsh
 ./macos.sh
 ```
