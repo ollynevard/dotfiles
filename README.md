@@ -40,6 +40,7 @@ isn't linked until you re-run `install` (or `stow -R <pkg>`).
 | `mycli`     | `~/.config/mycli/myclirc`                                     |
 | `nvim`      | `~/.config/nvim`                                              |
 | `omniwm`    | `~/.config/omniwm/settings.toml`                              |
+| `rex`       | `~/.config/rex/init.lua`                                      |
 | `ssh`       | `~/.ssh/config`                                               |
 | `starship`  | `~/.config/starship`                                          |
 | `worktrunk` | `~/.config/worktrunk`                                         |
@@ -118,5 +119,5 @@ isn't a Stow package. Terms are defined in [GLOSSARY.md](GLOSSARY.md).
 - `~/.config/omniwm/shell/`: OmniWM's bundled bar and theme defaults, which it
   manages itself. OmniWM's settings window saves through the symlink, so
   changes made there land in the repo.
-- Files owned by other tools: `~/.claude/skills/rex` and `~/.config/rex/`
-  (Rex), and `~/.agents/skills` (`npx skills`).
+- Files owned by other tools: `~/.claude/skills/rex` (Rex) and
+  `~/.agents/skills` (`npx skills`).

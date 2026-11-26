@@ -1,0 +1,5 @@
+-- Rex configuration (Lua 5.1). Reload with `rex config reload`; check with
+-- `rex config check`. Reference: https://www.superlogical.com/rex/docs/reference/lua.md
+--
+-- Nothing is customised yet: Rex's default key bindings and settings apply.
+-- Worktree sessions and windows are managed by wt-rex (~/.local/bin/wt-rex).
