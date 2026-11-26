@@ -49,5 +49,9 @@ dotfiles_path() {
     ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/sbin}
     $path
   )
+  # The rex CLI. Rex terminals append $REX_BIN_DIR themselves; this covers
+  # shells started anywhere else (other terminals, multiplexers inside Rex).
+  local rex="$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS"
+  [[ -d $rex ]] && path+=("$rex")
 }
 dotfiles_path

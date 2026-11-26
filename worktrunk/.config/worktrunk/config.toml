@@ -1,7 +1,7 @@
 # Worktrunk user config. Bare-layout projects (~/Code/<project>/.bare) get one
-# sibling directory per branch with "/" -> "+", and a herdr workspace nested
-# under the project's group (see ~/Code/dotfiles/bin/.local/bin/wt-herdr). Normal clones
-# keep Worktrunk's default path; wt-herdr ignores them.
+# sibling directory per branch with "/" -> "+", and a window in the project's Rex
+# session (see ~/Code/dotfiles/bin/.local/bin/wt-rex). Normal clones keep
+# Worktrunk's default path; wt-rex ignores them.
 # The "/" -> "+" rule is owned by project_worktree_dir in
 # ~/.local/lib/bare-project.sh; this template can't call it, so keep them in step.
 worktree-path = "{% if repo == '.bare' %}{{ repo_path }}/../{{ branch | replace('/', '+') }}{% else %}{{ repo_path }}/../{{ repo }}.{{ branch | sanitize }}{% endif %}"
@@ -11,8 +11,8 @@ worktree-path = "{% if repo == '.bare' %}{{ repo_path }}/../{{ branch | replace(
 # via .bare/info/exclude); without one nothing is copied, so dependencies such as
 # vendor/ and node_modules/ never are.
 [pre-start]
-setup = "wt step copy-ignored --require-include && wt-herdr open '{{ worktree_path }}'"
+setup = "wt step copy-ignored --require-include && wt-rex open '{{ worktree_path }}'"
 
 # sync first: Worktrunk checks "merged" against the local default branch.
 [pre-remove]
-herdr = "wt-herdr sync '{{ worktree_path }}' && wt-herdr close '{{ worktree_path }}'"
+rex = "wt-rex sync '{{ worktree_path }}' && wt-rex close '{{ worktree_path }}'"

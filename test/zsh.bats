@@ -53,7 +53,7 @@ $(cat "$f")
 @test "nested login shells (ZDOTDIR inherited) still read ~/.zshenv" {
     [ -d /opt/homebrew ] || skip "no Homebrew"
     # A shell started from another one inherits the exported ZDOTDIR, so zsh
-    # reads $ZDOTDIR/.zshenv instead of ~/.zshenv (herdr panes, exec zsh -l).
+    # reads $ZDOTDIR/.zshenv instead of ~/.zshenv (multiplexer panes, exec zsh -l).
     run env -i HOME="$HOME" TERM=xterm-256color ZDOTDIR="$HOME/.config/zsh" zsh -lc 'print -l $path'
     [ "$status" -eq 0 ]
     [[ $output != *"not found"* ]] || { echo "$output"; return 1; }

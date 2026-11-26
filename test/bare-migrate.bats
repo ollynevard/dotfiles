@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
-# bare-migrate end to end, with herdr and wt-herdr kept off PATH.
+# bare-migrate end to end, with Rex and wt-rex kept off PATH.
 
 load test_helper
 
 setup() {
     isolate
-    # Only git and jq from outside the system dirs, so wt-herdr (and herdr) are
+    # Only git and jq from outside the system dirs, so wt-rex and rex are
     # never found and no real workspaces are touched.
     mkdir "$W/bin"
     ln -s "$(command -v git)" "$W/bin/git"
@@ -32,7 +32,7 @@ setup() {
     [ "$(cat "$W/acme/main/.env")" = SECRET=1 ]
     [ "$(cat "$W/acme/feature+x/.env")" = SECRET=1 ]
     grep -qx .env "$W/acme/main/.worktreeinclude"
-    [ "$(git --git-dir="$W/acme/.bare" config herdr.label)" = ACME ]
+    [ "$(git --git-dir="$W/acme/.bare" config rex.label)" = ACME ]
     run jq -r '.projects | to_entries | map(select(.value.hasTrustDialogAccepted)) | .[].key' "$HOME/.claude.json"
     [ "${lines[0]}" = "$W/acme" ]
     [ "${lines[1]}" = "$W/acme/main" ]

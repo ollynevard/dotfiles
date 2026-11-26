@@ -28,7 +28,6 @@ brew "git-delta"
 brew "glow"
 brew "go-task"
 brew "hashicorp/tap/terraform", trusted: true
-brew "herdr"
 brew "jq"
 brew "lazydocker"
 brew "lazygit"

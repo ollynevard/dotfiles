@@ -18,15 +18,17 @@ else `master`.
 **Worktree**: one checkout per branch, a sibling of `.bare/`, named after the
 branch with `/` turned into `+`.
 
-**Project group**: the Project's parent workspace in herdr, labelled with the
-Project's label (`herdr.label` in `.bare/config`, else the folder name
-capitalised). It keeps a "repo" tab in `.bare/` and a shell tab in the default
+**Project session**: the Project's session in Rex, labelled with the Project's
+label (`rex.label` in `.bare/config`, else the folder name capitalised). Its
+id is kept in `rex.session` in `.bare/config`. Its first window is the default
 worktree.
 
-**Worktree workspace**: the herdr workspace for one worktree, nested under the
-Project group, where that branch's Claude session runs.
+**Worktree window**: the Rex window (tab) for one worktree in the Project
+session, labelled with the last part of the branch name. It's created when
+Claude starts there and holds one **Claude** block, where that branch's Claude
+session runs.
 
-**Orchestrator**: the Claude session in the herdr workspace **Control** at
+**Orchestrator**: the Claude session in the Rex session **Control** at
 `~/Code`. It starts and cleans up work; it doesn't edit code.
 
 **Trust**: Claude Code's per-folder "trust this folder?" acceptance in

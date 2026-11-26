@@ -116,6 +116,32 @@ setup() {
     [ "$output" = "ACME Web" ]
 }
 
+# --- sync ----------------------------------------------------------------------
+
+@test "project_sync fast-forwards the default worktree to origin" {
+    make_project acme main
+    git --git-dir="$P/.bare" worktree add -q "$P/main" main
+    git -C "$W/src" commit -q --allow-empty -m next
+    git -C "$W/src" push -q "$W/origin.git" main
+    project_load "$P"
+    project_sync
+    [ "$(git -C "$P/main" rev-parse HEAD)" = "$(git -C "$W/src" rev-parse HEAD)" ]
+}
+
+@test "project_sync fails without changing a diverged default worktree" {
+    make_project acme main
+    git --git-dir="$P/.bare" worktree add -q "$P/main" main
+    git -C "$P/main" commit -q --allow-empty -m local
+    local before
+    before=$(git -C "$P/main" rev-parse HEAD)
+    git -C "$W/src" commit -q --allow-empty -m next
+    git -C "$W/src" push -q "$W/origin.git" main
+    project_load "$P"
+    run project_sync
+    [ "$status" -ne 0 ]
+    [ "$(git -C "$P/main" rev-parse HEAD)" = "$before" ]
+}
+
 # --- trust ---------------------------------------------------------------------
 
 @test "trust is a no-op without ~/.claude.json" {

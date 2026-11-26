@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # bare-migrate: convert a normal clone to a Project in the bare layout that
-# Worktrunk and wt-herdr expect (see ~/.local/lib/bare-project.sh).
+# Worktrunk and wt-rex expect (see ~/.local/lib/bare-project.sh).
 #
-# Usage: bare-migrate <path|name-under-~/Code> [--label <herdr label>] [--yes]
+# Usage: bare-migrate <path|name-under-~/Code> [--label <label>] [--yes]
 #
 # The old tree is kept at <path>-old. Every worktree of the clone must be clean.
 # Local branches with commits origin lacks, git hooks and core.hooksPath carry
@@ -123,7 +123,7 @@ for b in ${wts[@]+"${wts[@]}"} ${cur:+"$cur"}; do
         add --track -b "$b" "$dir" "origin/$b"
     fi
     copy_files "$dir"
-    command -v wt-herdr >/dev/null && wt-herdr open "$dir" >/dev/null || true
+    command -v wt-rex >/dev/null && wt-rex open "$dir" >/dev/null || true
 done
 
 # The project root and default worktree are trusted like any other worktree.

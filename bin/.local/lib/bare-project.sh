@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # bare-project.sh: the Project module. The rules of the bare layout, shared by
-# wt-herdr and bare-migrate (terms in ~/Code/dotfiles/GLOSSARY.md):
+# wt-rex and bare-migrate (terms in ~/Code/dotfiles/GLOSSARY.md):
 #
 #   ~/Code/<project>/.bare      bare repository ($PROJECT_GIT)
 #   ~/Code/<project>/<default>  default worktree (main, master, ...)
@@ -36,7 +36,7 @@ project_git() { git --git-dir="$PROJECT_GIT" "$@"; }
 
 # project_default_branch: origin/HEAD, else origin/main, else local main, else
 # master. origin comes first because nothing updates the local default branch
-# in this layout except `wt-herdr sync`.
+# in this layout except project_sync (`wt-rex sync`).
 project_default_branch() {
     local b
     b=$(project_git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null) || b=""
@@ -65,11 +65,24 @@ project_default_worktree() {
     if [[ -n $p ]]; then printf '%s' "$p"; else project_worktree_dir "$b"; fi
 }
 
-# project_label: the Project group's label in herdr: `herdr.label` in
+# project_sync: fetch origin and fast-forward the default worktree. Worktrunk
+# decides "merged" against the local default branch, which nothing else updates
+# in this layout. Returns 1 when the fetch or the fast-forward fails, which only
+# means the merged check may be stale.
+project_sync() {
+    local main b
+    main=$(project_default_worktree)
+    b=$(project_default_branch)
+    project_git fetch --quiet --prune origin || return 1
+    [[ -d $main ]] || return 0
+    git -C "$main" merge --quiet --ff-only "origin/$b" 2>/dev/null
+}
+
+# project_label: the Project's label, used for its Rex session: `rex.label` in
 # .bare/config, else the folder name capitalised.
 project_label() {
     local l n
-    l=$(project_git config --get herdr.label) || l=""
+    l=$(project_git config --get rex.label) || l=""
     if [[ -z $l ]]; then
         n=$(basename "$PROJECT_ROOT")
         l="$(printf '%s' "${n:0:1}" | tr '[:lower:]' '[:upper:]')${n:1}"
@@ -78,7 +91,7 @@ project_label() {
 }
 
 # project_set_label LABEL
-project_set_label() { project_git config herdr.label "$1"; }
+project_set_label() { project_git config rex.label "$1"; }
 
 # project_trust add|remove DIR: pre-trust DIR in Claude Code, so a new session
 # there doesn't stop at the "trust this folder?" dialog, or drop that trust.

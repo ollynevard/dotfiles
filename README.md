@@ -118,5 +118,5 @@ isn't a Stow package. Terms are defined in [GLOSSARY.md](GLOSSARY.md).
 - `~/.config/omniwm/shell/`: OmniWM's bundled bar and theme defaults, which it
   manages itself. OmniWM's settings window saves through the symlink, so
   changes made there land in the repo.
-- Files owned by other tools: `~/.claude/hooks/herdr-agent-state.sh` and
-  `~/.config/herdr/config.toml` (herdr), and `~/.agents/skills` (`npx skills`).
+- Files owned by other tools: `~/.claude/skills/rex` and `~/.config/rex/`
+  (Rex), and `~/.agents/skills` (`npx skills`).

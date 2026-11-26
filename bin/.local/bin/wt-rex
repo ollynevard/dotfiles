@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+# wt-rex: glue between Worktrunk (git worktrees) and Rex (terminal sessions)
+# for Projects in the bare layout (see ~/.local/lib/bare-project.sh).
+#
+# In Rex each Project is a session (the Project session), labelled with the
+# Project's label, whose first window sits in the default worktree. Each other
+# worktree gets a window in it once Claude starts there, labelled with the last
+# part of its branch name and holding just a "Claude" block (split it for a
+# shell in the same folder). Claude Code reports its own state to Rex (working, blocked, idle), which Rex
+# shows on the window's tab and in the session list.
+#
+# Usage:
+#   wt-rex group  <project-dir>             ensure the Project session exists
+#   wt-rex open   <worktree-dir>            session + trust the folder in Claude; reports the
+#                                           worktree window and Claude block if they exist
+#   wt-rex claude <worktree-dir> [PROMPT]   open, then start Claude (with PROMPT as its first
+#                                           message) in the worktree window, creating the window,
+#                                           unless a Claude block is already there
+#   wt-rex close  <worktree-dir>            close the worktree window, drop the Claude trust entry
+#   wt-rex sync   <dir>                     fetch and fast-forward the default worktree
+#   wt-rex agents                           every agent block in every session, with its state
+#
+# group, open, claude and agents print JSON. Every command is idempotent and
+# exits 0 for repos that aren't in the bare layout, so Worktrunk hooks never
+# block normal clones.
+#
+# Bash 3.2 compatible (macOS /bin/bash).
+set -euo pipefail
+
+# shellcheck source-path=SCRIPTDIR source=../lib/bare-project.sh
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../lib/bare-project.sh"
+
+log() { echo "wt-rex: $*" >&2; }
+die() { log "$*"; exit 1; }
+usage() { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; }
+
+trust() { project_trust "$1" "$2" || log "could not update Claude trust for $2"; }
+
+# --- rex ---------------------------------------------------------------------
+
+# Rex terminals put the CLI's folder in $REX_BIN_DIR; elsewhere use PATH, then
+# the app's install location.
+REX_BIN_FALLBACK="$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
+if [[ -n ${REX_BIN_DIR:-} && -x $REX_BIN_DIR/rex ]]; then
+    REX=$REX_BIN_DIR/rex
+elif command -v rex >/dev/null 2>&1; then
+    REX=$(command -v rex)
+else
+    REX=$REX_BIN_FALLBACK
+fi
+rex() { "$REX" "$@"; }
+
+# Never start a Rex server: with none running there is nothing to put windows in.
+rex_up() { [[ -x $REX ]] && rex --autostart=false session ls -q >/dev/null 2>&1; }
+
+sessions() { rex session ls --json --short=false | jq -c '.sessions'; }
+
+# The windows of session $1, each with its blocks flattened out of its layers.
+windows() {
+    rex window ls -s "$1" --json --short=false |
+        jq -c '[.windows[] | {window_id, label, blocks: [.layers[].blocks[] | {block_id, label}]}]'
+}
+
+# Window id labelled $2 in session $1, if any.
+window_for_label() {
+    windows "$1" | jq -r --arg l "$2" 'map(select(.label == $l)) | .[0].window_id // empty'
+}
+
+# Block id labelled $3 in window $2 of session $1, if any.
+block_for_label() {
+    windows "$1" | jq -r --arg w "$2" --arg l "$3" \
+        'map(select(.window_id == $w)) | .[0].blocks // [] | map(select(.label == $l)) | .[0].block_id // empty'
+}
+
+# Serialise session creation: Worktrunk hooks and the orchestrator may race.
+lock() {
+    local i=0
+    until mkdir "$PROJECT_GIT/wt-rex.lock" 2>/dev/null; do
+        ((++i > 100)) && die "timed out waiting for $PROJECT_GIT/wt-rex.lock"
+        sleep 0.1
+    done
+    trap 'rmdir "$PROJECT_GIT/wt-rex.lock" 2>/dev/null || true' EXIT
+}
+
+# Prints the Project session's id, creating the session if needed. The id is
+# kept in .bare/config (rex.session) so a session renamed in Rex is still found;
+# without a live saved id, a session with the Project's label is adopted.
+ensure_session() {
+    local all id saved label main cwd r block
+    all=$(sessions)
+    label=$(project_label)
+    saved=$(project_git config --get rex.session || true)
+    id=""
+    if [[ -n $saved ]] && jq -e --arg s "$saved" 'any(.session_id == $s)' <<<"$all" >/dev/null; then
+        id=$saved
+    else
+        id=$(jq -r --arg l "$label" 'map(select(.label == $l)) | .[0].session_id // empty' <<<"$all")
+    fi
+    if [[ -z $id ]]; then
+        main=$(project_default_worktree)
+        cwd=$PROJECT_ROOT
+        [[ -d $main ]] && cwd=$main
+        r=$(rex session new "$label" -c "$cwd" --window "$(basename "$main")" --json)
+        id=$(jq -r '.session_id' <<<"$r")
+        [[ -n $id && $id != null ]] || die "could not create Rex session: $r"
+        block=$(jq -r '.initial_windows[0].block_ids[0] // empty' <<<"$r")
+        [[ -n $block ]] && rex block rename -s "$id" "$block" Shell >/dev/null
+        log "created Rex session '$label' ($id)"
+    fi
+    [[ $id == "$saved" ]] || project_git config rex.session "$id"
+    printf '%s' "$id"
+}
+
+# Sets DIR, BRANCH, LABEL, SID and WID (empty when the worktree has no window
+# yet) for worktree $1, creating the Project session if needed. Returns 1 (after
+# trusting the folder) when Rex isn't running.
+open_worktree() {
+    DIR=$(cd "$1" 2>/dev/null && pwd -P) || die "no such directory: $1"
+    project_load "$DIR" || exit 0
+    trust add "$DIR"
+    rex_up || { log "Rex is not running; no window opened"; return 1; }
+    BRANCH=$(git -C "$DIR" symbolic-ref --short -q HEAD || basename "$DIR")
+    lock
+    SID=$(ensure_session)
+    if [[ $DIR == "$(project_default_worktree)" ]]; then
+        LABEL=$(basename "$DIR")
+    else
+        LABEL=${BRANCH##*/}
+    fi
+    WID=$(window_for_label "$SID" "$LABEL")
+}
+
+# --- commands ----------------------------------------------------------------
+
+cmd_group() {
+    project_load "$1" || die "$1 is not a bare-layout project"
+    rex_up || die "Rex is not running"
+    lock
+    local id
+    id=$(ensure_session)
+    jq -n --arg s "$id" --arg label "$(project_label)" --arg root "$PROJECT_ROOT" '{session_id: $s, label: $label, project: $root}'
+}
+
+cmd_open() {
+    open_worktree "$1" || exit 0
+    local claude=""
+    [[ -n $WID ]] && claude=$(block_for_label "$SID" "$WID" Claude)
+    jq -n --arg dir "$DIR" --arg branch "$BRANCH" --arg s "$SID" --arg w "$WID" --arg claude "$claude" \
+        '{dir: $dir, branch: $branch, session_id: $s, window_id: $w, claude_block_id: $claude}
+         | with_entries(select(.value != ""))'
+}
+
+cmd_claude() {
+    local prompt=${2:-} claude="" started=false r
+    local cmd=(claude)
+    [[ -n $prompt ]] && cmd+=("$prompt")
+    open_worktree "$1" || die "Rex is not running"
+    [[ -n $WID ]] && claude=$(block_for_label "$SID" "$WID" Claude)
+    if [[ -z $WID ]]; then
+        r=$(rex window new -s "$SID" "$LABEL" -c "$DIR" --focus=false --json -- "${cmd[@]}")
+        WID=$(jq -r '.window_id // empty' <<<"$r")
+        claude=$(jq -r '.block_ids[0] // empty' <<<"$r")
+        [[ -n $WID && -n $claude ]] || die "could not start Claude: $r"
+        rex block rename -s "$SID" "$claude" Claude >/dev/null
+        started=true
+    elif [[ -z $claude ]]; then
+        r=$(rex split -s "$SID" -w "$WID" --split=left --ratio 60 --label Claude -c "$DIR" --focus=false --json -- "${cmd[@]}")
+        claude=$(jq -r '.block_ids[0] // empty' <<<"$r")
+        [[ -n $claude ]] || die "could not start Claude: $r"
+        started=true
+    elif [[ -n $prompt ]]; then
+        log "Claude is already running in $LABEL; prompt not sent"
+    fi
+    jq -n --arg dir "$DIR" --arg s "$SID" --arg w "$WID" --arg b "$claude" --argjson started "$started" \
+        '{dir: $dir, session_id: $s, window_id: $w, claude_block_id: $b, started: $started}'
+}
+
+cmd_close() {
+    local dir=$1 sid label wid here
+    [[ -d $dir ]] && dir=$(cd "$dir" && pwd -P)
+    project_load "$dir" || project_load "$(dirname "$dir")" || exit 0
+    trust remove "$dir"
+    rex_up || exit 0
+    sid=$(project_git config --get rex.session || true)
+    [[ -n $sid ]] || exit 0
+    sessions | jq -e --arg s "$sid" 'any(.session_id == $s)' >/dev/null || exit 0
+    if [[ $dir == "$(project_default_worktree)" ]]; then
+        label=$(basename "$dir")
+    else
+        label=$(git -C "$dir" symbolic-ref --short -q HEAD 2>/dev/null || basename "$dir")
+        label=${label##*/}
+    fi
+    wid=$(window_for_label "$sid" "$label")
+    [[ -n $wid ]] || exit 0
+    if [[ -n ${REX_BLOCK:-} ]]; then
+        here=$(windows "$sid" | jq -r --arg b "$REX_BLOCK" 'map(select(any(.blocks[]; .block_id == $b))) | .[0].window_id // empty')
+        if [[ $here == "$wid" ]]; then
+            log "not closing window $wid: this command is running in it"
+            exit 0
+        fi
+    fi
+    rex window close -s "$sid" "$wid" >/dev/null && log "closed window $label ($wid)"
+}
+
+cmd_sync() {
+    project_load "$1" || exit 0
+    project_sync || log "could not fetch or fast-forward the default worktree; merged checks may be stale"
+}
+
+# One line per block that has reported a program status (Claude Code does),
+# across every session.
+cmd_agents() {
+    rex_up || die "Rex is not running"
+    local s sid slabel w status
+    sessions | jq -c '.[]' | while read -r s; do
+        sid=$(jq -r '.session_id' <<<"$s")
+        slabel=$(jq -r '.label' <<<"$s")
+        windows "$sid" | jq -c '.[] | {window_id, label} + (.blocks[] | {block_id, block: .label})' | while read -r w; do
+            status=$(rex api call -s "$sid" block.method \
+                "$(jq -c --arg s "$sid" '{session_id: $s, block_id, method: "program_status"}' <<<"$w")" 2>/dev/null) || continue
+            jq -c --arg s "$sid" --arg sl "$slabel" --argjson w "$w" \
+                '.records // [] | select(length > 0) | .[0] as $r
+                 | {session: $sl, window: $w.label, block: $w.block, session_id: $s, window_id: $w.window_id,
+                    block_id: $w.block_id, app: ($r.effective_app // $r.app), state: $r.state, msg: $r.msg}
+                 | with_entries(select(.value != null))' <<<"$status"
+        done
+    done | jq -s '.'
+}
+
+case ${1:-} in
+    group | open | close | sync)
+        [[ $# -eq 2 ]] || die "usage: wt-rex $1 <dir>"
+        "cmd_$1" "$2"
+        ;;
+    claude)
+        [[ $# -eq 2 || $# -eq 3 ]] || die "usage: wt-rex claude <worktree-dir> [prompt]"
+        cmd_claude "$2" "${3:-}"
+        ;;
+    agents)
+        [[ $# -eq 1 ]] || die "usage: wt-rex agents"
+        cmd_agents
+        ;;
+    *) usage; exit 2 ;;
+esac
