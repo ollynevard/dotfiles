@@ -16,7 +16,7 @@ add_newline = false
 format = """
 $line_break\
 $fill$status$cmd_duration$time[ ─](surface1)$line_break\
-$username$hostname$directory$git_branch$git_status$git_metrics$git_state$git_commit$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
+$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
 $line_break\
 $character"""
 
@@ -101,12 +101,24 @@ error_symbol = '[❯](bold green)'
 style = 'bg:peach fg:crust bold'
 format = '[](fg:peach)[$ssh_symbol$hostname]($style)[](fg:peach) '
 
-[directory]
+# Folder, ticket and PR: set by functions/_prompt_context. In a git repository
+# the folder pill names the project instead of the folder (a worktree's folder
+# repeats its branch). Ticket and PR are links: Cmd-click to open.
+
+[env_var.STARSHIP_FOLDER]
 style = 'bg:blue fg:crust bold'
-format = '[](fg:blue)[ $path$read_only]($style)[](fg:blue) '
-truncation_length = 3
-truncation_symbol = '…/'
-read_only = ' 󰌾'
+format = '[](fg:blue)[$env_value]($style)[](fg:blue) '
+
+[directory] # replaced by env_var.STARSHIP_FOLDER
+disabled = true
+
+[env_var.STARSHIP_TICKET]
+style = 'bg:yellow fg:crust bold'
+format = ' [](fg:yellow)[ $env_value]($style)[](fg:yellow)'
+
+[env_var.STARSHIP_PR]
+style = 'bg:green fg:crust bold'
+format = ' [](fg:green)[ $env_value]($style)[](fg:green)'
 
 [git_branch]
 style = 'bg:mauve fg:crust bold'

@@ -67,6 +67,9 @@
 [init]
   defaultBranch = main
 
+[includeIf "hasconfig:remote.*.url:git@github.com:ambassador-cruise-line/**"]
+  path = work.gitconfig
+
 [url "git@github.com:ambassador-cruise-line/"]
   insteadOf = amb://
   insteadOf = ambassador://

@@ -123,3 +123,38 @@ setup_files() {
     rm_ -rf nope
     [ ! -s "$W/trashed" ]
 }
+
+# context DIR: run _prompt_context in DIR and print its variables, one per line.
+context() {
+    shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links; typeset -gi _prompt_pr_fd
+cd '$1' && _prompt_context
+print -r -- \"\$STARSHIP_FOLDER|\$STARSHIP_TICKET|\$STARSHIP_PR|\${(j:,:)_prompt_links}\""
+}
+
+@test "prompt folder: the last three folders outside git" {
+    mkdir -p "$W/a/b/c/d"
+    run context "$W/a/b/c/d"
+    [ "$output" = $' …/b/c/d|||' ]
+}
+
+@test "prompt folder, ticket and PR in a Project worktree" {
+    make_project acme main fix/ENG-7-thing
+    git --git-dir="$P/.bare" worktree add -q "$P/fix+ENG-7-thing" fix/ENG-7-thing
+    mkdir -p "$P/fix+ENG-7-thing/src/a/b"
+    git --git-dir="$P/.bare" config --add prompt.ticketUrl 'https://t.example/{} ENG OPS'
+    # A fresh cached PR, so gh isn't run.
+    mkdir -p "$HOME/.cache/prompt-pr"
+    echo "12 https://gh.example/pull/12" >"$HOME/.cache/prompt-pr/${P//\//%}@fix%ENG-7-thing"
+    run context "$P/fix+ENG-7-thing/src/a/b"
+    [ "$output" = $' acme/…/a/b|⟦1⟧|⟦2⟧|⟦1⟧,ENG-7,https://t.example/ENG-7,⟦2⟧,#12,https://gh.example/pull/12' ]
+}
+
+@test "prompt ticket: only prefixes listed in prompt.ticketUrl" {
+    make_project acme main demo-03-x
+    git --git-dir="$P/.bare" worktree add -q "$P/demo-03-x" demo-03-x
+    git --git-dir="$P/.bare" config --add prompt.ticketUrl 'https://t.example/{} ENG'
+    mkdir -p "$HOME/.cache/prompt-pr"
+    : >"$HOME/.cache/prompt-pr/${P//\//%}@demo-03-x"
+    run context "$P/demo-03-x"
+    [ "$output" = $' acme|||' ]
+}

@@ -19,6 +19,8 @@ typeset -g _prompt_typeahead=       # keys read while asking for the cursor
 typeset -gi _prompt_skip_blank=0    # 1: the command printed nothing
 typeset -gi _prompt_cursor_off=0    # 1: terminal ignores cursor queries
 typeset -g _prompt_last_cmd=        # for _prompt_notify
+typeset -gi _prompt_pr_fd=0         # _prompt_context's PR lookup, while it runs
+typeset -ga _prompt_links=()        # link placeholders, see _prompt_context
 
 unset RPROMPT # no right_format, so no second starship per prompt
 PROMPT='$_prompt_text'
@@ -29,9 +31,21 @@ autoload -Uz add-zsh-hook add-zle-hook-widget
 add-zsh-hook precmd _prompt_check_output
 add-zsh-hook precmd _prompt_notify
 add-zsh-hook precmd _prompt_aws
+add-zsh-hook precmd _prompt_context
 add-zsh-hook precmd _prompt_render
 add-zsh-hook preexec _prompt_preexec
 add-zle-hook-widget line-finish _prompt_collapse # Enter, Ctrl-C, any accept
+# _prompt_context's PR lookup finished: redraw with it. Defined here, not in its
+# own file, next to the other handler.
+_prompt_pr_done() {
+  local fd=$1
+  zle -F $fd
+  exec {fd}<&-
+  _prompt_pr_fd=0
+  _prompt_context
+  _prompt_render
+  zle .reset-prompt
+}
 # Redraw the rule at the new width when the window is resized. Defined here,
 # not in its own file: autoloading a function doesn't install it as a trap.
 TRAPWINCH() {

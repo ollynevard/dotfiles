@@ -94,6 +94,14 @@ add what Starship can't do on its own:
 - **AWS.** `_prompt_aws` copies `$AWS_PROFILE` into one of two variables so a
   profile with `prod` in its name (any case) shows as a red pill and any other
   as grey.
+- **Folder, ticket and PR.** `_prompt_context` fills the folder pill: in a git
+  repository the project's name (`wave`, not the worktree folder, which repeats
+  the branch) and where you are inside it. A ticket pill shows the `ABC-123` in
+  the branch name when git config `prompt.ticketUrl` lists its prefix (work
+  trackers are in `git/.config/git/work.gitconfig`, included for Ambassador
+  repositories), and a PR pill shows the branch's pull request from `gh`,
+  cached for 2 minutes and fetched in the background. Both are hyperlinks
+  showing just their text: Cmd-click to open.
 - **Notifications.** `_prompt_notify` sends a macOS notification when a command
   took 30 seconds or more.
 

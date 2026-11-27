@@ -4,6 +4,12 @@
 # from the format in starship.toml: keep the two in step.
 _prompt_text=${(e)_prompt_template}
 (( _prompt_skip_blank )) && _prompt_text=${_prompt_text#$'\n'}
+# Links (from _prompt_context): swap each placeholder for its text wrapped in
+# an OSC 8 hyperlink, with the escape codes in %{…%} so zsh counts only the text.
+local i
+for (( i = 1; i < $#_prompt_links; i += 3 )); do
+  _prompt_text=${_prompt_text//$_prompt_links[i]/%\{$'\e]8;;'$_prompt_links[i+2]$'\e\\'%\}$_prompt_links[i+1]%\{$'\e]8;;\e\\'%\}}
+done
 # A closing cap in colour A followed by an opening cap in colour B becomes one
 # round divider, A on a B background. Same colour on both sides (starship
 # writes both caps under one code) just joins: those items carry their own

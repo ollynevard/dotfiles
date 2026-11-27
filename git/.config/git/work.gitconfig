@@ -1,0 +1,7 @@
+# Included by config for Ambassador repositories.
+
+# Ticket links for the prompt (zsh functions/_prompt_git): a URL with {} for the
+# ticket, then the prefixes it covers. Linear teams first, then Jira projects.
+[prompt]
+  ticketUrl = https://linear.app/ambassador-cruise-line/issue/{} ENG COM CUS SKY COR
+  ticketUrl = https://ambassadorcruiseline.atlassian.net/browse/{} AMB GODEL SHORE AM GD BOOKING

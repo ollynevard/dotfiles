@@ -1,0 +1,72 @@
+# _prompt_context: set the variables behind the folder, ticket and PR pills
+# (env_var.STARSHIP_* in starship.toml). Exported for the same reason as
+# _prompt_aws's.
+#
+# - Folder: in a git repository, the project's name and where you are inside it
+#   (~/Code/wave/.bare and ~/Code/wave/.git are both "wave"), since a
+#   worktree's folder repeats its branch. Elsewhere, the last three folders.
+# - Ticket: the ABC-123 at the start of any part of the branch name, when git
+#   config prompt.ticketUrl lists its prefix: "URL-with-{} PREFIX…", one line
+#   per tracker (set in git/.config/git/work.gitconfig).
+# - PR: the branch's pull request, from gh. Cached per branch and fetched in the
+#   background when the copy is over 2 minutes old; the prompt redraws when it
+#   arrives (_prompt_pr_done in _prompt_setup).
+#
+# Ticket and PR are links. Starship mangles the escape codes for a link, so the
+# pills get a placeholder (⟦1⟧, ⟦2⟧) and _prompt_render swaps in the link from
+# _prompt_links: placeholder, text, URL, …
+unset STARSHIP_FOLDER STARSHIP_TICKET STARSHIP_PR
+_prompt_links=()
+local lock=; [[ -w $PWD ]] || lock=' 󰌾'
+
+local -a info
+info=("${(@f)$(git rev-parse --path-format=absolute --git-common-dir --show-toplevel --show-prefix 2>/dev/null)}")
+if (( $#info < 2 )); then
+  local dir=${(D)PWD}
+  local -a parts=(${(s:/:)dir})
+  (( $#parts > 3 )) && dir=…/${(j:/:)parts[-3,-1]}
+  export STARSHIP_FOLDER=' '$dir$lock
+  return 0
+fi
+local common=${info[1]} top=${info[2]} sub=${info[3]%/}
+local name=${top:t}
+[[ ${common:t} == (.git|.bare) ]] && name=${common:h:t}
+local -a parts=(${(s:/:)sub})
+(( $#parts > 2 )) && sub="…/${(j:/:)parts[-2,-1]}"
+export STARSHIP_FOLDER=' '$name${sub:+/$sub}$lock
+
+local branch
+branch=$(git symbolic-ref -q --short HEAD) || return 0
+
+# Ticket
+local key line
+if [[ /$branch =~ '/([A-Za-z][A-Za-z0-9]*)-([0-9]+)' ]]; then
+  key=${(U)match[1]}-${match[2]}
+  for line in ${(f)"$(git config --get-all prompt.ticketurl)"}; do
+    local -a w=(${=line})
+    if (( ${w[2,-1][(Ie)${key%-*}]} )); then
+      export STARSHIP_TICKET=⟦1⟧
+      _prompt_links+=(⟦1⟧ $key ${w[1]//\{\}/$key})
+      break
+    fi
+  done
+fi
+
+# PR: the cache holds "number url", or nothing when the branch has none.
+local cache=${XDG_CACHE_HOME:-$HOME/.cache}/prompt-pr/${${common:h}//\//%}@${branch//\//%}
+local -a fresh=($cache(N.mm-2))
+if (( ! $#fresh && ! _prompt_pr_fd )) && (( $+commands[gh] )); then
+  mkdir -p ${cache:h}
+  exec {_prompt_pr_fd}< <(
+    cd -q $top && gh pr view --json number,url -q '"\(.number) \(.url)"' >$cache.$$ 2>/dev/null
+    mv -f $cache.$$ $cache
+  )
+  zle -F $_prompt_pr_fd _prompt_pr_done
+fi
+local pr
+[[ -r $cache ]] && pr=$(<$cache)
+if [[ -n $pr ]]; then
+  export STARSHIP_PR=⟦2⟧
+  _prompt_links+=(⟦2⟧ \#${pr%% *} ${pr#* })
+fi
+return 0
