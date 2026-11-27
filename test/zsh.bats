@@ -194,10 +194,11 @@ cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \${(j: :)\${(ok)parame
 cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \$STARSHIP_CHECKS'|'\${(j:,:)_prompt_checks}"
     }
     run checks -;      [ "$output" = "|" ]
-    run checks ppp;    [[ $output == '⟦3⟧|green,'?*' 3' ]]
-    run checks pfr;    [ "$output" = "⟦3⟧|green,■,red,■,yellow,■" ]
-    run checks "$(printf 'p%.0s' {1..25})f"; [[ $output == '⟦3⟧|red,'?*' 1' ]]
-    run checks "$(printf 'p%.0s' {1..20})rrrrrr"; [[ $output == '⟦3⟧|yellow,'?*' 20/26' ]]
+    run checks ppp;    [[ $output == '⟦3⟧|green,'?*' 3,https://gh.example/pull/12/checks' ]]
+    run checks pfr;    [ "$output" = "⟦3⟧|green,■,https://gh.example/pull/12/checks,red,■,https://gh.example/pull/12/checks,yellow,■,https://gh.example/pull/12/checks" ]
+    run checks $'pf\nhttps://ci/1\nhttps://ci/2'; [ "$output" = "⟦3⟧|green,■,https://ci/1,red,■,https://ci/2" ]
+    run checks "$(printf 'p%.0s' {1..25})f"; [[ $output == '⟦3⟧|red,'?*' 1,https://gh.example/pull/12/checks' ]]
+    run checks "$(printf 'p%.0s' {1..20})rrrrrr"; [[ $output == '⟦3⟧|yellow,'?*' 20/26,https://gh.example/pull/12/checks' ]]
 }
 
 @test "Claude status line: the context line plus model and context pills" {

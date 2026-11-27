@@ -17,13 +17,13 @@ local i
 for (( i = 1; i < $#_prompt_links; i += 3 )); do
   REPLY=${REPLY//$_prompt_links[i]/$ro$'\e]8;;'$_prompt_links[i+2]$'\e\\'$rc$_prompt_links[i+1]$ro$'\e]8;;\e\\'$rc}
 done
-# Checks (from _prompt_context): swap ⟦3⟧ for its (colour text) pairs, each
-# text in its colour on the pill's own background.
+# Checks (from _prompt_context): swap ⟦3⟧ for its (colour text link) triples,
+# each text a link in its colour on the pill's own background.
 if (( $#_prompt_checks )); then
   local -A rgb=(green '166;227;161' yellow '249;226;175' red '243;139;168')
   local checks=
-  for (( i = 1; i < $#_prompt_checks; i += 2 )); do
-    checks+=$ro$'\e[38;2;'$rgb[$_prompt_checks[i]]m$rc$_prompt_checks[i+1]
+  for (( i = 1; i < $#_prompt_checks; i += 3 )); do
+    checks+=$ro$'\e[38;2;'$rgb[$_prompt_checks[i]]m$'\e]8;;'$_prompt_checks[i+2]$'\e\\'$rc$_prompt_checks[i+1]$ro$'\e]8;;\e\\'$rc
   done
   REPLY=${REPLY//⟦3⟧/$checks}
 fi

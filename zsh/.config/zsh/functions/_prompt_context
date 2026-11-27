@@ -66,11 +66,16 @@ fi
 # PR: the cache holds "number url state checks", or nothing when the branch
 # has none. state: merged, closed, draft, approved, changes_requested,
 # review_required, or open. checks: a letter per check in CI order (p passed,
-# r running, f failed), or - when there are none.
+# r running, f failed), or - when there are none. Then a line per check with
+# its page, in the same order.
 local cache=${XDG_CACHE_HOME:-$HOME/.cache}/prompt-pr/${${common:h}//\//%}@${branch//\//%}
 local pr
 local -a p fresh
-[[ -r $cache ]] && pr=$(<$cache) && p=(${=pr})
+local -a urls
+if [[ -r $cache ]]; then
+  urls=("${(@f)$(<$cache)}")
+  pr=$urls[1] p=(${=urls[1]}) urls=($urls[2,-1])
+fi
 if [[ $p[4] == *r* ]]; then fresh=($cache(N.ms-30)); else fresh=($cache(N.mm-2)); fi
 if (( ! $#fresh && ! _prompt_pr_fd )) && (( $+commands[gh] )); then
   mkdir -p ${cache:h}
@@ -80,9 +85,10 @@ if (( ! $#fresh && ! _prompt_pr_fd )) && (( $+commands[gh] )); then
         then {SUCCESS: "p", FAILURE: "f", ERROR: "f"}[.state] // "r"
         elif .status != "COMPLETED" then "r"
         else {SUCCESS: "p", NEUTRAL: "p", SKIPPED: "", STALE: ""}[.conclusion] // "f" end;
+      [.statusCheckRollup[]? | {l: check, u: (.detailsUrl // .targetUrl // "")} | select(.l != "")] as $c |
       "\(.number) \(.url) \(if .state != "OPEN" then .state | ascii_downcase
         elif .isDraft then "draft" else .reviewDecision // "open" | ascii_downcase end) \(
-        [.statusCheckRollup[]? | check] | join("") | if . == "" then "-" else . end)"' >$cache.$$ 2>/dev/null
+        $c | map(.l) | join("") | if . == "" then "-" else . end)", ($c[] | .u)' >$cache.$$ 2>/dev/null
     mv -f $cache.$$ $cache
   }
   if [[ -o zle ]]; then
@@ -101,17 +107,21 @@ if [[ -n $pr ]]; then
     *) export STARSHIP_PR=⟦2⟧ ;;
   esac
   _prompt_links+=(⟦2⟧ \#$p[1] $p[2])
-  # Checks: (colour text) pairs for _prompt_decorate to swap in for ⟦3⟧.
-  local checks=${p[4]#-} k
+  # Checks: (colour text link) for _prompt_decorate to swap in for ⟦3⟧. Each
+  # cell links to its check; a count to the PR's checks tab.
+  local checks=${p[4]#-} all=$p[2]/checks
+  local -i n
   if [[ -n $checks ]]; then
     export STARSHIP_CHECKS=⟦3⟧
     local -i fails=${#checks//[^f]} done=${#checks//[^pf]}
-    if [[ $checks != *[rf]* ]]; then _prompt_checks=(green " $#checks")
+    if [[ $checks != *[rf]* ]]; then _prompt_checks=(green " $#checks" $all)
     elif (( $#checks <= 24 )); then
       local -A colour=(p green r yellow f red)
-      for k in ${(s::)checks}; do _prompt_checks+=($colour[$k] ■); done
-    elif (( fails )); then _prompt_checks=(red " $fails")
-    else _prompt_checks=(yellow "󰔟 $done/$#checks")
+      for (( n = 1; n <= $#checks; n++ )); do
+        _prompt_checks+=($colour[$checks[n]] ■ ${urls[n]:-$all})
+      done
+    elif (( fails )); then _prompt_checks=(red " $fails" $all)
+    else _prompt_checks=(yellow "󰔟 $done/$#checks" $all)
     fi
   fi
 fi
