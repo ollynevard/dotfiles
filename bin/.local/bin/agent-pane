@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# agent-pane: show each Claude Code subagent live in a Rex pane beside the
+# Claude pane that started it.
+#
+# The first subagent opens a column on the right (a third of the width); each
+# further one stacks into that column, which is kept evenly split. A pane
+# follows the subagent's transcript (prompt, tool calls, results, replies) and
+# closes itself AGENT_PANE_LINGER seconds (default 10) after the subagent
+# finishes. Once you focus a pane it stays until you press q or close it, so
+# you can read it at your own pace.
+#
+# Usage:
+#   agent-pane hook                       Claude Code SubagentStart/SubagentStop hook (JSON on stdin)
+#   agent-pane view SESSION TRANSCRIPT DONE   the pane's program (started by the hook)
+#   agent-pane rebalance SESSION WINDOW   even out the subagent column
+#
+# Outside Rex the hook does nothing. It never fails: a subagent must not stop
+# because a pane couldn't open.
+#
+# Bash 3.2 compatible (macOS /bin/bash).
+set -uo pipefail
+
+SELF=$(readlink -f "${BASH_SOURCE[0]}")
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/agent-pane"
+PREFIX="↳ " # labels the column's panes; how the hook finds the column
+LINGER=${AGENT_PANE_LINGER:-10}
+
+REX_BIN_FALLBACK="$HOME/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
+if [[ -n ${REX_BIN_DIR:-} && -x $REX_BIN_DIR/rex ]]; then
+    REX=$REX_BIN_DIR/rex
+elif command -v rex >/dev/null 2>&1; then
+    REX=$(command -v rex)
+else
+    REX=$REX_BIN_FALLBACK
+fi
+rex() { "$REX" --autostart=false "$@"; }
+
+# column SESSION WINDOW: the column's block ids, top to bottom.
+column() {
+    rex session inspect "$1" --json | jq -r --arg w "$2" --arg p "$PREFIX" '
+        .windows[] | select(.window_id == $w) | .layers[] | select(.kind == "tiled")
+        | ([.blocks[] | select(.label // "" | startswith($p)) | .block_id]) as $ids
+        | [.layout | .. | objects | select(has("block_id") and has("rect"))
+           | select(.block_id as $b | $ids | index($b))]
+        | sort_by(.rect[1]) | .[].block_id'
+}
+
+# Splits nest, each new pane splitting the one above it, so the border under
+# pane i (0-based) of n gives that pane 1/(n-i) of what's left.
+cmd_rebalance() {
+    local sid=$1 win=$2 ids n i
+    # shellcheck disable=SC2207 # block ids have no spaces
+    ids=($(column "$sid" "$win"))
+    n=${#ids[@]}
+    for ((i = 0; i < n - 1; i++)); do
+        rex api call session.resize_pane "$(jq -nc --arg s "$sid" --arg a "${ids[i]}" --arg b "${ids[i + 1]}" \
+            --argjson r "$(awk -v k=$((n - i)) 'BEGIN { print 1 / k }')" \
+            '{session_id: $s, direction: "vertical", before_block_id: $a, after_block_id: $b, ratio: $r}')" >/dev/null
+    done
+}
+
+hook_start() {
+    local input=$1 sid win agent type transcript donef last new
+    [[ -n ${REX_BLOCK:-} && -x $REX ]] || return 0
+    agent=$(jq -r .agent_id <<<"$input")
+    type=$(jq -r '.agent_type // "agent"' <<<"$input")
+    # The parent's transcript is <dir>/<session>.jsonl; subagents write theirs
+    # to <dir>/<session>/subagents/agent-<id>.jsonl.
+    transcript="$(jq -r .transcript_path <<<"$input")"
+    transcript="${transcript%.jsonl}/subagents/agent-$agent.jsonl"
+    donef="$STATE/$agent.done"
+    rm -f "$donef"
+
+    read -r sid win < <(rex block inspect "$REX_BLOCK" --json | jq -r '"\(.session_id) \(.block.window_id)"') || return 0
+    # Parallel subagents start together: one at a time, or two would each open a column.
+    local lock="$STATE/$win.lock" tries=0
+    until mkdir "$lock" 2>/dev/null; do
+        ((++tries > 50)) && { rm -rf "$lock"; mkdir "$lock" 2>/dev/null; break; }
+        sleep 0.1
+    done
+    last=$(column "$sid" "$win" | tail -n 1)
+    if [[ -z $last ]]; then
+        # --ratio alone doesn't hold (the split comes out even), so set the border after.
+        new=$(rex split -s "$sid" -b "$REX_BLOCK" --split=right --focus=false --json \
+            --label "$PREFIX$type" -- "$SELF" view "$sid" "$transcript" "$donef" | jq -r ".block_ids[0]") &&
+            rex api call session.resize_pane "$(jq -nc --arg s "$sid" --arg a "$REX_BLOCK" --arg b "$new" \
+                '{session_id: $s, direction: "horizontal", before_block_id: $a, after_block_id: $b, ratio: (2 / 3)}')" >/dev/null
+    else
+        rex split -s "$sid" -b "$last" --split=below --focus=false \
+            --label "$PREFIX$type" -- "$SELF" view "$sid" "$transcript" "$donef" >/dev/null &&
+            cmd_rebalance "$sid" "$win"
+    fi
+    rmdir "$lock"
+}
+
+hook_stop() {
+    jq -r '.last_assistant_message // ""' <<<"$1" >"$STATE/$(jq -r .agent_id <<<"$1").done"
+}
+
+cmd_hook() {
+    local input
+    input=$(cat)
+    mkdir -p "$STATE"
+    case $(jq -r .hook_event_name <<<"$input") in
+        SubagentStart) hook_start "$input" ;;
+        SubagentStop) hook_stop "$input" ;;
+    esac
+} >/dev/null 2>&1
+
+# One line per tool call, the first line of each result, and the subagent's
+# prompt and replies in full.
+# shellcheck disable=SC2016 # jq program
+FORMAT='
+def short($n): tostring | gsub("\\s+"; " ") | if length > $n then .[0:$n] + "…" else . end;
+def text: if type == "array" then map(.text? // "") | join("\n") else tostring end;
+def arg: .command // .file_path // .path // .pattern // .url // .query // .description // .prompt // tostring;
+def dim: "\u001b[2m" + . + "\u001b[0m";
+if .type == "user" then
+  .message.content
+  | if type == "string" then
+      if startswith("<") then empty else "\u001b[1m▶ " + . + "\u001b[0m\n" end
+    else .[] | select(.type == "tool_result")
+      | .is_error as $err | (.content | text) as $t | ($t | split("\n") | length) as $n
+      | ("  ⎿ " + ($t | short(100)) + (if $n > 1 then " (\($n) lines)" else "" end))
+        | if $err then "\u001b[31m" + . + "\u001b[0m" else dim end
+    end
+elif .type == "assistant" then
+  .message.content[]
+  | if .type == "text" then "\n" + .text + "\n"
+    elif .type == "tool_use" then "\u001b[36m⏺\u001b[0m \(.name)(\(.input | arg | short(110)))"
+    else empty end
+else empty end'
+
+focused() {
+    rex session inspect "$1" --json | jq -e --arg b "$REX_BLOCK" \
+        '.windows[] | select(.focused_block_id == $b)' >/dev/null 2>&1
+}
+
+cmd_view() {
+    local sid=$1 transcript=$2 donef=$3 pinned="" deadline="" win key
+    win=$(rex block inspect "$REX_BLOCK" --json | jq -r .block.window_id)
+    tail -n +1 -F "$transcript" 2>/dev/null | jq --unbuffered -r "$FORMAT" 2>/dev/null &
+    # Name the pane after the task once Claude has written it down.
+    (
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+            d=$(jq -r '.description // empty' "${transcript%.jsonl}.meta.json" 2>/dev/null)
+            [[ -n $d ]] && { rex block rename "$REX_BLOCK" "$PREFIX$d" >/dev/null 2>&1; break; }
+            sleep 1
+        done
+    ) &
+    while :; do
+        [[ -z $pinned ]] && focused "$sid" && pinned=1
+        if [[ -z $deadline && -f $donef ]]; then
+            sleep 1 # let tail catch up
+            printf '\n\033[32m✓ done\033[0m'
+            deadline=$((SECONDS + LINGER))
+        fi
+        if [[ -n $deadline ]]; then
+            if [[ -n $pinned ]]; then
+                [[ $deadline != pinned ]] && printf ' \033[2m(press q to close)\033[0m\n' && deadline=pinned
+            elif ((SECONDS >= deadline)); then
+                break
+            fi
+        fi
+        if read -rsn1 -t 1 key && [[ $key == q && -n $deadline ]]; then break; fi
+    done
+    pkill -P $$ 2>/dev/null
+    rm -f "$donef"
+    # The pane closes when this exits; even out the rest once it has.
+    # shellcheck disable=SC2016 # expanded by sh
+    nohup sh -c 'sleep 0.5; exec "$0" rebalance "$1" "$2"' "$SELF" "$sid" "$win" >/dev/null 2>&1 &
+}
+
+case ${1:-} in
+    hook) cmd_hook ;;
+    view) shift && cmd_view "$@" ;;
+    rebalance) shift && cmd_rebalance "$@" ;;
+    *) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0" && exit 2 ;;
+esac
+exit 0
