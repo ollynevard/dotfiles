@@ -39,6 +39,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/statusline"
+  },
   "enabledPlugins": {
     "mattpocock-skills@claude-plugins-official": true,
     "sentry@claude-plugins-official": true,
@@ -46,11 +50,12 @@
   },
   "effortLevel": "high",
   "tui": "fullscreen",
-  "skipAutoPermissionPrompt": true,
+  "switchModelsOnFlag": false,
   "agentPushNotifEnabled": true,
-  "statusLine": {
-    "type": "command",
-    "command": "$HOME/.claude/statusline"
-  },
-  "switchModelsOnFlag": false
+  "skipAutoPermissionPrompt": true,
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  }
 }
