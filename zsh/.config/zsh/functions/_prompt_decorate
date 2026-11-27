@@ -1,0 +1,29 @@
+# _prompt_decorate TEXT [plain]: finish a starship rendering, into REPLY.
+#
+# - Links (from _prompt_context): swap each placeholder for its text wrapped in
+#   an OSC 8 hyperlink.
+# - A closing cap in colour A followed by an opening cap in colour B becomes one
+#   round divider, A on a B background. Same colour on both sides (starship
+#   writes both caps under one code) just joins: those items carry their own
+#   leading space.
+#
+# For the shell prompt every escape code sits in %{…%} so zsh counts only the
+# text; "plain" is for output that isn't a zsh prompt (the Claude Code status
+# line), where they're bare.
+REPLY=$1
+local o='%\{' c='%\}' ro='%{' rc='%}'
+[[ $2 == plain ]] && o= c= ro= rc=
+local i
+for (( i = 1; i < $#_prompt_links; i += 3 )); do
+  REPLY=${REPLY//$_prompt_links[i]/$ro$'\e]8;;'$_prompt_links[i+2]$'\e\\'$rc$_prompt_links[i+1]$ro$'\e]8;;\e\\'$rc}
+done
+local e=$'\e' cap=$'' open=$'' n
+for n in {1..8}; do # bounded, so a bad match can never hang the prompt
+  if [[ $REPLY =~ "$o$e\\[38;2;([0-9;]+)m$c$cap$o$e\\[38;2;([0-9;]+)m$c$open" ]]; then
+    REPLY[MBEGIN,MEND]="$ro${e}[38;2;${match[1]};48;2;${match[2]}m$rc$cap$ro${e}[0m$rc"
+  elif [[ $REPLY =~ "$o$e\\[38;2;([0-9;]+)m$c$cap$open" ]]; then
+    REPLY[MBEGIN,MEND]=""
+  else
+    break
+  fi
+done

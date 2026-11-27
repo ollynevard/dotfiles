@@ -32,7 +32,7 @@ isn't linked until you re-run `install` (or `stow -R <pkg>`).
 | `atuin`     | `~/.config/atuin/config.toml`                                 |
 | `bat`       | `~/.config/bat`                                               |
 | `bin`       | `~/.local/bin/*` (worktree scripts), `~/.local/lib/bare-project.sh` |
-| `claude`    | `~/.claude/settings.json`, `statusline-command.sh`, `rules/`, `skills/worktrees` |
+| `claude`    | `~/.claude/settings.json`, `statusline`, `rules/`, `skills/worktrees` |
 | `gh`        | `~/.config/gh/config.yml`                                     |
 | `ghostty`   | `~/.config/ghostty`                                           |
 | `git`       | `~/.config/git`                                               |
@@ -100,8 +100,17 @@ add what Starship can't do on its own:
   the branch name when git config `prompt.ticketUrl` lists its prefix (work
   trackers are in `git/.config/git/work.gitconfig`, included for Ambassador
   repositories), and a PR pill shows the branch's pull request from `gh`,
-  cached for 2 minutes and fetched in the background. Both are hyperlinks
+  cached for 2 minutes and fetched in the background, coloured by review
+  state: green approved (or no review needed), peach waiting, red changes
+  requested, grey draft. Both are hyperlinks
   showing just their text: Cmd-click to open.
+- **Claude Code status line.** `claude/.claude/statusline` draws the same
+  context line (folder, git, ticket, PR) through starship's `claude-code`
+  profile, then the model with its details fused on like git status: effort
+  (a gauge), fast mode (a bolt) and context (a pie that fills up to 100k tokens
+  with the count beside it: green, yellow from 60k, red past 100k). Claude
+  Code's own PR badge is off (`prStatusFooterEnabled: false` in
+  `~/.claude.json`, which isn't in this repo), since the PR pill covers it.
 - **Notifications.** `_prompt_notify` sends a macOS notification when a command
   took 30 seconds or more.
 

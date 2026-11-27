@@ -16,7 +16,7 @@ add_newline = false
 format = """
 $line_break\
 $fill$status$cmd_duration$time[ ─](surface1)$line_break\
-$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
+$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
 $line_break\
 $character"""
 
@@ -116,9 +116,21 @@ disabled = true
 style = 'bg:yellow fg:crust bold'
 format = ' [](fg:yellow)[ $env_value]($style)[](fg:yellow)'
 
-[env_var.STARSHIP_PR]
+[env_var.STARSHIP_PR] # approved, or no review needed
 style = 'bg:green fg:crust bold'
 format = ' [](fg:green)[ $env_value]($style)[](fg:green)'
+
+[env_var.STARSHIP_PR_PENDING] # waiting for review
+style = 'bg:peach fg:crust bold'
+format = ' [](fg:peach)[ $env_value]($style)[](fg:peach)'
+
+[env_var.STARSHIP_PR_CHANGES] # changes requested
+style = 'bg:red fg:crust bold'
+format = ' [](fg:red)[ $env_value]($style)[](fg:red)'
+
+[env_var.STARSHIP_PR_DRAFT] # draft
+style = 'bg:surface0 fg:overlay2 bold'
+format = ' [](fg:surface0)[ $env_value]($style)[](fg:surface0)'
 
 [git_branch]
 style = 'bg:mauve fg:crust bold'
@@ -164,6 +176,45 @@ format = ' [](fg:teal)[$symbol$workspace]($style)[](fg:teal)'
 style = 'bg:sky fg:crust bold'
 number_threshold = 1
 format = ' [](fg:sky)[$symbol$number]($style)[](fg:sky)'
+
+# Claude Code status line ------------------------------------------------
+# claude/.claude/statusline runs this profile: the context line above, then
+# the model with its details fused on like git status (effort, fast mode, how
+# full the context is), from env vars that script sets.
+
+[profiles]
+claude-code = "${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}$claude_model${env_var.STARSHIP_CLAUDE_EFFORT}${env_var.STARSHIP_CLAUDE_FAST}${env_var.STARSHIP_CLAUDE_CONTEXT}${env_var.STARSHIP_CLAUDE_CONTEXT_WARM}${env_var.STARSHIP_CLAUDE_CONTEXT_HOT}"
+
+[claude_model]
+style = 'bg:lavender fg:crust bold'
+symbol = '󰚩 '
+format = ' [](fg:lavender)[$symbol$model]($style)[](fg:lavender)'
+
+[claude_context] # replaced by the env_var pills below
+disabled = true
+
+[claude_cost]
+disabled = true
+
+[env_var.STARSHIP_CLAUDE_EFFORT] # dots: one for low up to five for max
+style = 'bg:surface0 fg:sky bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_CLAUDE_FAST]
+style = 'bg:surface0 fg:yellow bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_CLAUDE_CONTEXT] # a pie that fills up to 100k tokens
+style = 'bg:surface0 fg:green bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_CLAUDE_CONTEXT_WARM] # from 60k
+style = 'bg:surface0 fg:yellow bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_CLAUDE_CONTEXT_HOT] # past 100k
+style = 'bg:surface0 fg:red bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
 
 # Runtimes and tools: grey pills with coloured text, like nodejs. The AWS
 # pills read variables set by functions/_prompt_aws (in the format line above).
@@ -228,7 +279,7 @@ version_format = '${major}.${minor}'
 format = ' [](fg:surface0)[$symbol($version)]($style)[](fg:surface0)'
 
 # Every other module, generated from starship's defaults: same content, as a
-# grey pill with coloured text like nodejs. Battery, Claude's modules and the
+# grey pill with coloured text like nodejs. Battery and the
 # jj/fossil/hg metrics keep their own look.
 
 [azure]

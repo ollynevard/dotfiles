@@ -1,29 +1,12 @@
-# _prompt_render: render the prompt once, fuse touching pills into a ribbon,
-# and work out the collapsed version: the full prompt minus its context line,
-# which is third from last ([… rule, context, blank, ❯]). That position comes
-# from the format in starship.toml: keep the two in step.
+# _prompt_render: render the prompt once, add links and fuse touching pills into
+# a ribbon (_prompt_decorate), and work out the collapsed version: the full
+# prompt minus its context line, which is third from last ([… rule, context,
+# blank, ❯]). That position comes from the format in starship.toml: keep the
+# two in step.
 _prompt_text=${(e)_prompt_template}
 (( _prompt_skip_blank )) && _prompt_text=${_prompt_text#$'\n'}
-# Links (from _prompt_context): swap each placeholder for its text wrapped in
-# an OSC 8 hyperlink, with the escape codes in %{…%} so zsh counts only the text.
-local i
-for (( i = 1; i < $#_prompt_links; i += 3 )); do
-  _prompt_text=${_prompt_text//$_prompt_links[i]/%\{$'\e]8;;'$_prompt_links[i+2]$'\e\\'%\}$_prompt_links[i+1]%\{$'\e]8;;\e\\'%\}}
-done
-# A closing cap in colour A followed by an opening cap in colour B becomes one
-# round divider, A on a B background. Same colour on both sides (starship
-# writes both caps under one code) just joins: those items carry their own
-# leading space.
-local e=$'\e' cap=$'' open=$'' n
-for n in {1..8}; do # bounded, so a bad match can never hang the prompt
-  if [[ $_prompt_text =~ "%\\{$e\\[38;2;([0-9;]+)m%\\}$cap%\\{$e\\[38;2;([0-9;]+)m%\\}$open" ]]; then
-    _prompt_text[MBEGIN,MEND]="%{${e}[38;2;${match[1]};48;2;${match[2]}m%}$cap%{${e}[0m%}"
-  elif [[ $_prompt_text =~ "%\\{$e\\[38;2;([0-9;]+)m%\\}$cap$open" ]]; then
-    _prompt_text[MBEGIN,MEND]=""
-  else
-    break
-  fi
-done
+_prompt_decorate $_prompt_text
+_prompt_text=$REPLY
 local -a lines=("${(@f)_prompt_text}")
 lines[-3]=()
 _prompt_short=${(pj:\n:)lines}

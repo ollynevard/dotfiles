@@ -1,0 +1,45 @@
+#!/bin/zsh
+# Claude Code status line: the shell prompt's context line (folder, git, ticket,
+# PR) plus a model pill with its details fused on like git status: effort, fast
+# mode, and context. Drawn by starship's claude-code profile in starship.toml
+# so it shares the prompt's pills.
+#
+# Context is measured against 100k tokens, where answers start to get worse,
+# not the window size: a pie that fills up to 100k, green, yellow from 60k, red
+# past 100k.
+#
+# Not -f: .zshenv sets ZDOTDIR and PATH (no .zshrc, it's not interactive).
+input=$(cat)
+local -a data
+data=("${(@f)$(jq -r '
+  .workspace.current_dir // .cwd,
+  .effort.level // "",
+  .fast_mode // false,
+  (.context_window.current_usage // {} | (.input_tokens // 0) + (.cache_creation_input_tokens // 0) + (.cache_read_input_tokens // 0))
+' <<<$input)}")
+
+fpath=($ZDOTDIR/functions $fpath)
+autoload -Uz _prompt_context _prompt_decorate
+typeset -gi _prompt_pr_fd=0
+typeset -ga _prompt_links=()
+cd -q ${data[1]:-$PWD} 2>/dev/null && _prompt_context
+
+local -a levels=(low medium high xhigh max)
+local -i level=${levels[(ie)${data[2]}]}
+(( level <= $#levels )) && export STARSHIP_CLAUDE_EFFORT=${(l:level::●:)}${(l:5-level::○:)}
+[[ ${data[3]} == true ]] && export STARSHIP_CLAUDE_FAST=󱐋
+
+local -i tokens=${data[4]:-0}
+if (( tokens )); then
+  local -a pies=(󰪞 󰪟 󰪠 󰪡 󰪢 󰪣 󰪤 󰪥) # circle, an eighth more each time
+  local -i slice=$(( tokens * 8 / 100000 + 1 ))
+  (( slice > 8 )) && slice=8
+  local text="$pies[slice] $(( (tokens + 500) / 1000 ))k"
+  if (( tokens >= 100000 )); then export STARSHIP_CLAUDE_CONTEXT_HOT=$text
+  elif (( tokens >= 60000 )); then export STARSHIP_CLAUDE_CONTEXT_WARM=$text
+  else export STARSHIP_CLAUDE_CONTEXT=$text
+  fi
+fi
+
+_prompt_decorate "$(starship statusline claude-code <<<$input)" plain
+print -r -- $REPLY

@@ -158,3 +158,41 @@ print -r -- \"\$STARSHIP_FOLDER|\$STARSHIP_TICKET|\$STARSHIP_PR|\${(j:,:)_prompt
     run context "$P/demo-03-x"
     [ "$output" = $' acme|||' ]
 }
+
+@test "prompt PR: coloured by review state" {
+    make_project acme main fix/ENG-7-thing
+    git --git-dir="$P/.bare" worktree add -q "$P/fix+ENG-7-thing" fix/ENG-7-thing
+    mkdir -p "$HOME/.cache/prompt-pr"
+    c="$HOME/.cache/prompt-pr/${P//\//%}@fix%ENG-7-thing"
+    for state in draft changes_requested review_required approved; do
+        echo "12 https://gh.example/pull/12 $state" >"$c"
+        run shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links; typeset -gi _prompt_pr_fd
+cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \$STARSHIP_PR,\$STARSHIP_PR_DRAFT,\$STARSHIP_PR_CHANGES,\$STARSHIP_PR_PENDING"
+        echo "$state: $output"
+        case $state in
+            draft) [ "$output" = ',⟦2⟧,,' ] ;;
+            changes_requested) [ "$output" = ',,⟦2⟧,' ] ;;
+            review_required) [ "$output" = ',,,⟦2⟧' ] ;;
+            approved) [ "$output" = '⟦2⟧,,,' ] ;;
+        esac
+    done
+}
+
+@test "Claude status line: the context line plus model and context pills" {
+    command -v starship >/dev/null || skip "starship not installed"
+    mkdir -p "$HOME/.config/starship"
+    ln -s "$REPO/starship/.config/starship/starship.toml" "$HOME/.config/starship/starship.toml"
+    make_project acme main fix/ENG-7-thing
+    git --git-dir="$P/.bare" worktree add -q "$P/fix+ENG-7-thing" fix/ENG-7-thing
+    git --git-dir="$P/.bare" config --add prompt.ticketUrl 'https://t.example/{} ENG'
+    mkdir -p "$HOME/.cache/prompt-pr"
+    echo "12 https://gh.example/pull/12" >"$HOME/.cache/prompt-pr/${P//\//%}@fix%ENG-7-thing"
+    json='{"workspace":{"current_dir":"'"$P/fix+ENG-7-thing"'"},"model":{"id":"claude-x","display_name":"Opus 5.5"},
+      "context_window":{"current_usage":{"input_tokens":5,"cache_creation_input_tokens":1000,"cache_read_input_tokens":69000}}}'
+    run shell -c "print -r -- '$json' | '$REPO/claude/.claude/statusline' | perl -pe 's/\e\[[0-9;]*m//g; s/\e\]8;;([^\e]*)\e\\\\\\\\/<\$1>/g'"
+    [ "$status" -eq 0 ]
+    [[ $output == *acme*fix/ENG-7-thing* ]]
+    [[ $output == *'<https://t.example/ENG-7>ENG-7<>'* ]]
+    [[ $output == *'<https://gh.example/pull/12>#12<>'* ]]
+    [[ $output == *'Opus 5.5'*' 70k'* ]]
+}

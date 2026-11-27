@@ -50,7 +50,7 @@
   "agentPushNotifEnabled": true,
   "statusLine": {
     "type": "command",
-    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+    "command": "$HOME/.claude/statusline"
   },
   "switchModelsOnFlag": false
 }
