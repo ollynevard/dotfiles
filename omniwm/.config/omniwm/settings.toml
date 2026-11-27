@@ -167,7 +167,7 @@ enabled = true
 heightPercent = 50.0
 monitorMode = "focusedWindow"
 opacity = 0.8
-position = "top"
+position = "bottom"
 provider = "ghostty"
 widthPercent = 100.0
 
