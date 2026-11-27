@@ -16,7 +16,7 @@ add_newline = false
 format = """
 $line_break\
 $fill$status$cmd_duration$time[ ─](surface1)$line_break\
-$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
+$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
 $line_break\
 $character"""
 
@@ -112,9 +112,17 @@ format = '[](fg:blue)[$env_value]($style)[](fg:blue) '
 [directory] # replaced by env_var.STARSHIP_FOLDER
 disabled = true
 
-[env_var.STARSHIP_TICKET]
+[env_var.STARSHIP_TICKET] # in progress: no PR, a draft or a closed one
 style = 'bg:yellow fg:crust bold'
 format = ' [](fg:yellow)[ $env_value]($style)[](fg:yellow)'
+
+[env_var.STARSHIP_TICKET_REVIEW] # an open PR
+style = 'bg:teal fg:crust bold'
+format = ' [](fg:teal)[ $env_value]($style)[](fg:teal)'
+
+[env_var.STARSHIP_TICKET_DONE] # PR merged
+style = 'bg:green fg:crust bold'
+format = ' [](fg:green)[ $env_value]($style)[](fg:green)'
 
 [env_var.STARSHIP_PR] # approved, or no review needed
 style = 'bg:green fg:crust bold'
@@ -128,9 +136,13 @@ format = ' [](fg:peach)[ $env_value]($style)[](fg:peach)'
 style = 'bg:red fg:crust bold'
 format = ' [](fg:red)[ $env_value]($style)[](fg:red)'
 
-[env_var.STARSHIP_PR_DRAFT] # draft
+[env_var.STARSHIP_PR_DRAFT] # draft or closed
 style = 'bg:surface0 fg:overlay2 bold'
 format = ' [](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
+[env_var.STARSHIP_PR_MERGED] # merged
+style = 'bg:mauve fg:crust bold'
+format = ' [](fg:mauve)[ $env_value]($style)[](fg:mauve)'
 
 [git_branch]
 style = 'bg:mauve fg:crust bold'
@@ -183,12 +195,12 @@ format = ' [](fg:sky)[$symbol$number]($style)[](fg:sky)'
 # full the context is), from env vars that script sets.
 
 [profiles]
-claude-code = "${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}$claude_model${env_var.STARSHIP_CLAUDE_EFFORT}${env_var.STARSHIP_CLAUDE_FAST}${env_var.STARSHIP_CLAUDE_CONTEXT}${env_var.STARSHIP_CLAUDE_CONTEXT_WARM}${env_var.STARSHIP_CLAUDE_CONTEXT_HOT}"
+claude-code = "${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}$claude_model${env_var.STARSHIP_CLAUDE_EFFORT}${env_var.STARSHIP_CLAUDE_FAST}${env_var.STARSHIP_CLAUDE_CONTEXT}${env_var.STARSHIP_CLAUDE_CONTEXT_WARM}${env_var.STARSHIP_CLAUDE_CONTEXT_HOT}"
 
 [claude_model]
-style = 'bg:lavender fg:crust bold'
+style = 'bg:flamingo fg:crust bold'
 symbol = '󰚩 '
-format = ' [](fg:lavender)[$symbol$model]($style)[](fg:lavender)'
+format = ' [](fg:flamingo)[$symbol$model]($style)[](fg:flamingo)'
 
 [claude_context] # replaced by the env_var pills below
 disabled = true

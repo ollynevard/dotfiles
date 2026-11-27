@@ -128,7 +128,7 @@ setup_files() {
 context() {
     shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links; typeset -gi _prompt_pr_fd
 cd '$1' && _prompt_context
-print -r -- \"\$STARSHIP_FOLDER|\$STARSHIP_TICKET|\$STARSHIP_PR|\${(j:,:)_prompt_links}\""
+print -r -- \"\$STARSHIP_FOLDER|\$STARSHIP_TICKET\$STARSHIP_TICKET_REVIEW|\$STARSHIP_PR|\${(j:,:)_prompt_links}\""
 }
 
 @test "prompt folder: the last three folders outside git" {
@@ -159,22 +159,27 @@ print -r -- \"\$STARSHIP_FOLDER|\$STARSHIP_TICKET|\$STARSHIP_PR|\${(j:,:)_prompt
     [ "$output" = $' acme|||' ]
 }
 
-@test "prompt PR: coloured by review state" {
+@test "prompt PR coloured by state, ticket following it" {
     make_project acme main fix/ENG-7-thing
     git --git-dir="$P/.bare" worktree add -q "$P/fix+ENG-7-thing" fix/ENG-7-thing
+    git --git-dir="$P/.bare" config --add prompt.ticketUrl 'https://t.example/{} ENG'
     mkdir -p "$HOME/.cache/prompt-pr"
     c="$HOME/.cache/prompt-pr/${P//\//%}@fix%ENG-7-thing"
-    for state in draft changes_requested review_required approved; do
-        echo "12 https://gh.example/pull/12 $state" >"$c"
-        run shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links; typeset -gi _prompt_pr_fd
-cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \$STARSHIP_PR,\$STARSHIP_PR_DRAFT,\$STARSHIP_PR_CHANGES,\$STARSHIP_PR_PENDING"
-        echo "$state: $output"
+    # state: expected PR pill, ticket pill (variable name suffixes; - for none)
+    for want in none:-:TICKET draft:PR_DRAFT:TICKET closed:PR_DRAFT:TICKET merged:PR_MERGED:TICKET_DONE \
+        review_required:PR_PENDING:TICKET_REVIEW changes_requested:PR_CHANGES:TICKET_REVIEW \
+        approved:PR:TICKET_REVIEW open:PR:TICKET_REVIEW; do
+        IFS=: read -r state pr ticket <<<"$want"
         case $state in
-            draft) [ "$output" = ',⟦2⟧,,' ] ;;
-            changes_requested) [ "$output" = ',,⟦2⟧,' ] ;;
-            review_required) [ "$output" = ',,,⟦2⟧' ] ;;
-            approved) [ "$output" = '⟦2⟧,,,' ] ;;
+            none) : >"$c" ;;
+            open) echo "12 https://gh.example/pull/12" >"$c" ;;
+            *) echo "12 https://gh.example/pull/12 $state" >"$c" ;;
         esac
+        run shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links; typeset -gi _prompt_pr_fd
+cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \${(j: :)\${(ok)parameters[(I)STARSHIP_(PR|TICKET)*]}}"
+        echo "$state: $output"
+        if [ "$pr" = - ]; then [ "$output" = "STARSHIP_$ticket" ]
+        else [ "$output" = "STARSHIP_$pr STARSHIP_$ticket" ]; fi
     done
 }
 

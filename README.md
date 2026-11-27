@@ -102,7 +102,9 @@ add what Starship can't do on its own:
   repositories), and a PR pill shows the branch's pull request from `gh`,
   cached for 2 minutes and fetched in the background, coloured by review
   state: green approved (or no review needed), peach waiting, red changes
-  requested, grey draft. Both are hyperlinks
+  requested, grey draft or closed, mauve merged. The ticket pill follows it:
+  yellow in progress (no PR, a draft or closed one), teal in review (an open
+  PR), green done (merged). Both are hyperlinks
   showing just their text: Cmd-click to open.
 - **Claude Code status line.** `claude/.claude/statusline` draws the same
   context line (folder, git, ticket, PR) through starship's `claude-code`
