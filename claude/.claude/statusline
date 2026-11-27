@@ -21,7 +21,7 @@ data=("${(@f)$(jq -r '
 fpath=($ZDOTDIR/functions $fpath)
 autoload -Uz _prompt_context _prompt_decorate
 typeset -gi _prompt_pr_fd=0
-typeset -ga _prompt_links=()
+typeset -ga _prompt_links=() _prompt_checks=()
 cd -q ${data[1]:-$PWD} 2>/dev/null && _prompt_context
 
 local -a levels=(low medium high xhigh max)

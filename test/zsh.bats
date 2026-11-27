@@ -183,6 +183,23 @@ cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \${(j: :)\${(ok)parame
     done
 }
 
+@test "prompt PR checks: heat map until all pass, then a count" {
+    make_project acme main fix/ENG-7-thing
+    git --git-dir="$P/.bare" worktree add -q "$P/fix+ENG-7-thing" fix/ENG-7-thing
+    mkdir -p "$HOME/.cache/prompt-pr"
+    c="$HOME/.cache/prompt-pr/${P//\//%}@fix%ENG-7-thing"
+    checks() {
+        echo "12 https://gh.example/pull/12 open $1" >"$c"
+        shell -fc "fpath=('$ZDOT/functions'); autoload -Uz _prompt_context; typeset -ga _prompt_links _prompt_checks; typeset -gi _prompt_pr_fd
+cd '$P/fix+ENG-7-thing' && _prompt_context && print -r -- \$STARSHIP_CHECKS'|'\${(j:,:)_prompt_checks}"
+    }
+    run checks -;      [ "$output" = "|" ]
+    run checks ppp;    [[ $output == '⟦3⟧|green,'?*' 3' ]]
+    run checks pfr;    [ "$output" = "⟦3⟧|green,■,red,■,yellow,■" ]
+    run checks "$(printf 'p%.0s' {1..25})f"; [[ $output == '⟦3⟧|red,'?*' 1' ]]
+    run checks "$(printf 'p%.0s' {1..20})rrrrrr"; [[ $output == '⟦3⟧|yellow,'?*' 20/26' ]]
+}
+
 @test "Claude status line: the context line plus model and context pills" {
     command -v starship >/dev/null || skip "starship not installed"
     mkdir -p "$HOME/.config/starship"

@@ -104,7 +104,10 @@ add what Starship can't do on its own:
   state: green approved (or no review needed), peach waiting, red changes
   requested, grey draft or closed, mauve merged. The ticket pill follows it:
   yellow in progress (no PR, a draft or closed one), teal in review (an open
-  PR), green done (merged). Both are hyperlinks
+  PR), green done (merged). The PR's checks are fused onto its pill: a heat
+  map of ■, one per check in CI order (green passed, yellow running, red
+  failed), until they've all passed, then ✓ and how many. While checks run,
+  the PR is fetched every 30 seconds instead of every 2 minutes. Both are hyperlinks
   showing just their text: Cmd-click to open.
 - **Claude Code status line.** `claude/.claude/statusline` draws the same
   context line (folder, git, ticket, PR) through starship's `claude-code`

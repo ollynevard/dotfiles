@@ -21,6 +21,7 @@ typeset -gi _prompt_cursor_off=0    # 1: terminal ignores cursor queries
 typeset -g _prompt_last_cmd=        # for _prompt_notify
 typeset -gi _prompt_pr_fd=0         # _prompt_context's PR lookup, while it runs
 typeset -ga _prompt_links=()        # link placeholders, see _prompt_context
+typeset -ga _prompt_checks=()       # PR checks, see _prompt_context
 
 unset RPROMPT # no right_format, so no second starship per prompt
 PROMPT='$_prompt_text'

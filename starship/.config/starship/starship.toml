@@ -16,7 +16,7 @@ add_newline = false
 format = """
 $line_break\
 $fill$status$cmd_duration$time[ ─](surface1)$line_break\
-$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
+$username$hostname${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}${env_var.STARSHIP_CHECKS}$terraform${env_var.STARSHIP_AWS_PROD}${env_var.STARSHIP_AWS}$all$line_break\
 $line_break\
 $character"""
 
@@ -144,6 +144,10 @@ format = ' [](fg:surface0)[ $env_value]($style)[](fg:surface0)'
 style = 'bg:mauve fg:crust bold'
 format = ' [](fg:mauve)[ $env_value]($style)[](fg:mauve)'
 
+[env_var.STARSHIP_CHECKS] # fused onto the PR pill; _prompt_decorate colours it
+style = 'bg:surface0 fg:overlay2 bold'
+format = '[](fg:surface0)[ $env_value]($style)[](fg:surface0)'
+
 [git_branch]
 style = 'bg:mauve fg:crust bold'
 format = '[](fg:mauve)[$symbol$branch(:$remote_branch)]($style)[](fg:mauve)'
@@ -195,7 +199,7 @@ format = ' [](fg:sky)[$symbol$number]($style)[](fg:sky)'
 # full the context is), from env vars that script sets.
 
 [profiles]
-claude-code = "${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}$claude_model${env_var.STARSHIP_CLAUDE_EFFORT}${env_var.STARSHIP_CLAUDE_FAST}${env_var.STARSHIP_CLAUDE_CONTEXT}${env_var.STARSHIP_CLAUDE_CONTEXT_WARM}${env_var.STARSHIP_CLAUDE_CONTEXT_HOT}"
+claude-code = "${env_var.STARSHIP_FOLDER}$git_branch$git_status$git_metrics$git_state$git_commit${env_var.STARSHIP_TICKET}${env_var.STARSHIP_TICKET_REVIEW}${env_var.STARSHIP_TICKET_DONE}${env_var.STARSHIP_PR}${env_var.STARSHIP_PR_PENDING}${env_var.STARSHIP_PR_CHANGES}${env_var.STARSHIP_PR_DRAFT}${env_var.STARSHIP_PR_MERGED}${env_var.STARSHIP_CHECKS}$claude_model${env_var.STARSHIP_CLAUDE_EFFORT}${env_var.STARSHIP_CLAUDE_FAST}${env_var.STARSHIP_CLAUDE_CONTEXT}${env_var.STARSHIP_CLAUDE_CONTEXT_WARM}${env_var.STARSHIP_CLAUDE_CONTEXT_HOT}"
 
 [claude_model]
 style = 'bg:flamingo fg:crust bold'
